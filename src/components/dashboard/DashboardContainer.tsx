@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { Header } from '../common/Header';
 import { NewsTickerBar } from '../common/NewsTickerBar';
@@ -19,6 +19,7 @@ import { UserProfileModule } from '../modules/UserProfileModule';
 import { SettingsModule } from '../modules/SettingsModule';
 import { ReferencesModule } from '../modules/ReferencesModule';
 import { SalesAutoTracker } from './SalesAutoTracker';
+import { RefreshCw, ArrowDown } from 'lucide-react';
 
 export type NavigationTab =
   | 'dashboard'
@@ -34,13 +35,84 @@ export type NavigationTab =
   | 'profile';
 
 export const DashboardContainer: React.FC = () => {
-  const { authState } = useAuth();
+  const { 
+    authState, 
+    refreshMorningPlans, 
+    refreshEveningReports, 
+    refreshGPSData, 
+    refreshReferences, 
+    refreshLeaves, 
+    showToast 
+  } = useAuth();
+  
   const [currentTab, setCurrentTab] = useState<NavigationTab>('dashboard');
   const [isOpenMobileSidebar, setIsOpenMobileSidebar] = useState(false);
   const [isOpenMoreSheet, setIsOpenMoreSheet] = useState(false);
   const [isCollapsedSidebar, setIsCollapsedSidebar] = useState<boolean>(() => {
     return localStorage.getItem('sales_sidebar_collapsed') === 'true';
   });
+
+  // Pull to refresh states
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [pullY, setPullY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const isDragging = useRef(false);
+
+  const handlePullRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        refreshMorningPlans(),
+        refreshEveningReports(),
+        refreshGPSData(),
+        refreshReferences(),
+        refreshLeaves(),
+      ]);
+      showToast('success', 'Data Refreshed', 'Latest records synced successfully!');
+    } catch (err) {
+      console.warn('Pull refresh notice:', err);
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPullY(0);
+      }, 500);
+    }
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (scrollRef.current && scrollRef.current.scrollTop <= 2 && !isRefreshing) {
+      touchStartY.current = e.touches[0].clientY;
+      isDragging.current = true;
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+
+    if (diff > 0 && scrollRef.current && scrollRef.current.scrollTop <= 2) {
+      const resistance = 0.45;
+      const pull = Math.min(diff * resistance, 90);
+      setPullY(pull);
+    } else {
+      setPullY(0);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+
+    if (pullY >= 50 && !isRefreshing) {
+      setPullY(50);
+      handlePullRefresh();
+    } else {
+      setPullY(0);
+    }
+  };
 
   const toggleCollapseSidebar = () => {
     setIsCollapsedSidebar(prev => {
@@ -114,7 +186,48 @@ export const DashboardContainer: React.FC = () => {
         {/* Real-time Broadcast Marquee News Ticker */}
         <NewsTickerBar />
 
-        <div className="flex-1 min-h-0 overflow-y-auto relative overscroll-contain">
+        {/* Pull to Refresh Animated Indicator */}
+        <AnimatePresence>
+          {(pullY > 0 || isRefreshing) && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: isRefreshing ? 48 : pullY, opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+              className="w-full flex items-center justify-center overflow-hidden bg-slate-100/90 dark:bg-slate-900/90 border-b border-sky-500/20 text-sky-600 dark:text-sky-400 z-20 backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <RefreshCw
+                  className={`w-4 h-4 ${
+                    isRefreshing
+                      ? 'animate-spin text-sky-500'
+                      : pullY >= 50
+                      ? 'text-emerald-500 rotate-180 transition-transform'
+                      : 'text-sky-500'
+                  }`}
+                  style={{
+                    transform: isRefreshing ? undefined : `rotate(${pullY * 3.6}deg)`
+                  }}
+                />
+                <span>
+                  {isRefreshing
+                    ? 'Syncing latest data...'
+                    : pullY >= 50
+                    ? 'Release to refresh'
+                    : 'Pull down to refresh'}
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div
+          ref={scrollRef}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          className="flex-1 min-h-0 overflow-y-auto relative overscroll-y-contain touch-pan-y"
+        >
           <main className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-28 lg:pb-12">
             <motion.div
               key={currentTab}

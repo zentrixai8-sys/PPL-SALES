@@ -13,7 +13,8 @@ import {
   UserX,
   Megaphone,
   Flame,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -46,9 +47,43 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleCollapseSidebar,
   isSidebarCollapsed,
 }) => {
-  const { authState, logout, themeMode, toggleTheme, leaveRecords, refreshLeaves, activeNotice } = useAuth();
+  const { 
+    authState, 
+    logout, 
+    themeMode, 
+    toggleTheme, 
+    leaveRecords, 
+    refreshLeaves, 
+    activeNotice,
+    refreshMorningPlans,
+    refreshEveningReports,
+    refreshGPSData,
+    refreshReferences,
+    showToast
+  } = useAuth();
+  
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isHeaderRefreshing, setIsHeaderRefreshing] = useState(false);
+
+  const handleHeaderSync = async () => {
+    if (isHeaderRefreshing) return;
+    setIsHeaderRefreshing(true);
+    try {
+      await Promise.all([
+        refreshMorningPlans(),
+        refreshEveningReports(),
+        refreshGPSData(),
+        refreshReferences(),
+        refreshLeaves()
+      ]);
+      showToast('success', 'Data Synchronized', 'All reports & records are up to date!');
+    } catch (err) {
+      console.warn('Header sync notice:', err);
+    } finally {
+      setTimeout(() => setIsHeaderRefreshing(false), 500);
+    }
+  };
 
   const user = authState.user;
   const userInitial = (user?.userName || 'U').charAt(0).toUpperCase();
@@ -130,6 +165,18 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Section: Notifications, Theme Switcher & User Profile */}
       <div className="flex items-center gap-1.5 md:gap-3">
+        {/* Quick Sync/Refresh Button */}
+        <button
+          type="button"
+          onClick={handleHeaderSync}
+          disabled={isHeaderRefreshing}
+          className="p-1.5 md:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-1.5 text-xs font-semibold disabled:opacity-50"
+          title="Refresh All Data"
+        >
+          <RefreshCw className={`w-4 h-4 md:w-4.5 md:h-4.5 text-sky-500 transition-all ${isHeaderRefreshing ? 'animate-spin text-sky-600' : 'hover:rotate-45'}`} />
+          <span className="hidden sm:inline text-sky-600 dark:text-sky-400 font-bold">Sync</span>
+        </button>
+
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
