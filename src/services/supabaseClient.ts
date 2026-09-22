@@ -1,10 +1,10 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-let rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+let rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/^["']|["']$/g, '').trim();
 // Strip any trailing /rest/v1 or trailing slashes if accidentally pasted
 rawUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 const supabaseUrl = rawUrl;
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim().replace(/^["']|["']$/g, '').trim();
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 

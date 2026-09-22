@@ -12,6 +12,7 @@ import {
   deleteSheetRowById,
   updateSheetRow
 } from '../services/api';
+import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
 
 interface AuthContextType {
   authState: AuthState;
