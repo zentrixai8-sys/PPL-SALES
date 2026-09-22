@@ -443,8 +443,8 @@ export const ReferencesModule: React.FC = () => {
 
                     {/* 11) Next Followup Date */}
                     <td className="p-3 text-center">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-950/80 text-amber-300 border border-amber-800/80 font-mono font-semibold text-[11px]">
-                        <Calendar className="w-3 h-3 text-amber-400" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 font-mono font-bold text-[11px]">
+                        <Calendar className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                         {ref.nextFollowupDate ? convertInputDateToDDMMYYYY(ref.nextFollowupDate) : '-'}
                       </span>
                     </td>

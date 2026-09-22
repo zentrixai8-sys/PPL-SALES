@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, AuthState, ToastMessage, MorningPlan, EveningReport, GPSRecord, GPSExcelRecord, AttendanceRecord, Customer, ReferenceRecord, LeaveRecord } from '../types';
+import { User, AuthState, ToastMessage, MorningPlan, EveningReport, GPSRecord, GPSExcelRecord, AttendanceRecord, Customer, ReferenceRecord, LeaveRecord, AdminNotice } from '../types';
 import { 
   loginWithGoogleSheet, 
   saveGPSToSheet, 
@@ -23,6 +23,12 @@ interface AuthContextType {
   // Theme Mode
   themeMode: 'dark' | 'light';
   toggleTheme: () => void;
+  // Broadcast Notices
+  activeNotice: AdminNotice | null;
+  broadcastNotice: (notice: { title: string; message: string; priority: 'urgent' | 'important' | 'info' }) => Promise<void>;
+  clearNotice: () => void;
+  dismissNotice: () => void;
+  isNoticeDismissed: boolean;
   // Data States
   morningPlans: MorningPlan[];
   addMorningPlan: (plan: MorningPlan) => void;
@@ -58,6 +64,7 @@ interface AuthContextType {
   deleteReference: (id: string) => Promise<boolean>;
   updateAttendanceRecord: (rec: AttendanceRecord) => void;
   deleteAttendanceRecord: (id: string) => void;
+  updateUserProfilePic: (newProfileUrl: string) => Promise<void>;
 }
 
 const LOCAL_STORAGE_USER_KEY = 'sales_reporting_user';
@@ -108,10 +115,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     localStorage.setItem('sales_theme', themeMode);
-    if (themeMode === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
+    if (themeMode === 'dark') {
+      document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
     }
   }, [themeMode]);
 
@@ -156,6 +165,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [leaveRecords, setLeaveRecords] = useState<LeaveRecord[]>(() =>
     loadStoredRecords<LeaveRecord>('sales_leaves')
   );
+
+  // Admin Broadcast Notice State
+  const [activeNotice, setActiveNotice] = useState<AdminNotice | null>(() => {
+    try {
+      const saved = localStorage.getItem('ppl_admin_broadcast_notice');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.isActive) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  });
+
+  const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
+
+  // Sync notice across browser tabs in real-time
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'ppl_admin_broadcast_notice') {
+        try {
+          if (e.newValue) {
+            const parsed = JSON.parse(e.newValue);
+            setActiveNotice(parsed?.isActive ? parsed : null);
+            setIsNoticeDismissed(false);
+          } else {
+            setActiveNotice(null);
+          }
+        } catch {
+          setActiveNotice(null);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const broadcastNotice = async (notice: { title: string; message: string; priority: 'urgent' | 'important' | 'info' }) => {
+    const newNotice: AdminNotice = {
+      id: `notice-${Date.now()}`,
+      title: notice.title.trim() || 'System Announcement',
+      message: notice.message.trim(),
+      priority: notice.priority || 'important',
+      createdAt: new Date().toISOString(),
+      sender: authState.user?.userName || 'Administrator',
+      isActive: true
+    };
+    setActiveNotice(newNotice);
+    setIsNoticeDismissed(false);
+    localStorage.setItem('ppl_admin_broadcast_notice', JSON.stringify(newNotice));
+    showToast('success', 'Notice Broadcasted', 'Notice has been broadcast to all users & live news ticker.');
+  };
+
+  const clearNotice = () => {
+    setActiveNotice(null);
+    localStorage.removeItem('ppl_admin_broadcast_notice');
+    showToast('info', 'Notice Cleared', 'Active broadcast notice has been removed.');
+  };
+
+  const dismissNotice = () => {
+    setIsNoticeDismissed(true);
+  };
 
   // Save to LocalStorage on changes
   useEffect(() => {
@@ -613,6 +685,25 @@ plan.address || ''
     });
   };
 
+  const updateUserProfilePic = async (newProfileUrl: string) => {
+    if (!authState.user) return;
+    const updatedUser = { ...authState.user, profileUrl: newProfileUrl };
+    setAuthState(prev => ({ ...prev, user: updatedUser }));
+    localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updatedUser));
+    localStorage.setItem('Profile URL', newProfileUrl);
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('users')
+          .update({ profile_url: newProfileUrl })
+          .eq('id', authState.user.id);
+      } catch (err) {
+        console.warn('Could not update profile in Supabase:', err);
+      }
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -624,6 +715,11 @@ plan.address || ''
         removeToast,
         themeMode,
         toggleTheme,
+        activeNotice,
+        broadcastNotice,
+        clearNotice,
+        dismissNotice,
+        isNoticeDismissed,
         morningPlans,
         addMorningPlan,
         eveningReports,
@@ -656,6 +752,7 @@ plan.address || ''
         deleteReference,
         updateAttendanceRecord,
         deleteAttendanceRecord,
+        updateUserProfilePic,
       }}
     >
       {children}

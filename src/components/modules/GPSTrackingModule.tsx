@@ -899,23 +899,23 @@ export const GPSTrackingModule: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-4xl w-full text-slate-200 shadow-2xl space-y-5 max-h-[90vh] flex flex-col"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 max-w-4xl w-full text-slate-900 dark:text-slate-200 shadow-2xl space-y-5 max-h-[90vh] flex flex-col"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold">
                     <FileSpreadsheet className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg text-white">Excel Upload Preview</h3>
-                    <p className="text-xs text-slate-400 flex items-center gap-1.5 flex-wrap">
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">Excel Upload Preview</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 flex-wrap">
                       <FileText className="w-3.5 h-3.5 text-sky-600" />
                       <span>{uploadFileName}</span>
                       <span className="mx-0.5">•</span>
-                      <strong className="text-emerald-400">{parsedRows.length} Unique Rows</strong>
+                      <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{parsedRows.length} Unique Rows</strong>
                       {skippedDuplicates > 0 && (
-                        <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-950/90 text-amber-300 border border-amber-800/80 text-[10px] font-semibold">
+                        <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/90 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 text-[10px] font-bold">
                           {skippedDuplicates} Duplicates Skipped
                         </span>
                       )}
@@ -925,20 +925,20 @@ export const GPSTrackingModule: React.FC = () => {
 
                 <button
                   onClick={() => setShowPreviewModal(false)}
-                  className="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors"
+                  className="p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <p className="text-xs text-slate-400">
-                Verify the 13 columns mapped from your file below. Click <strong className="text-emerald-400 font-semibold">'Upload & Save Records'</strong> to store them in the system database.
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Verify the 13 columns mapped from your file below. Click <strong className="text-emerald-600 dark:text-emerald-400 font-bold">'Upload &amp; Save Records'</strong> to store them in the system database.
               </p>
 
               {/* Preview Table */}
-              <div className="flex-1 overflow-auto border border-slate-800 rounded-2xl bg-slate-950/80 custom-scrollbar">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-900 text-slate-400 uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-800">
+              <div className="flex-1 overflow-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-950/80 custom-scrollbar">
+                <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+                  <thead className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th className="p-3">#</th>
                       <th className="p-3">Transporter</th>

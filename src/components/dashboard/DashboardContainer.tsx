@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { Header } from '../common/Header';
+import { NewsTickerBar } from '../common/NewsTickerBar';
 import { Sidebar } from '../common/Sidebar';
+import { MobileBottomNav } from '../common/MobileBottomNav';
+import { MobileMoreSheet } from '../common/MobileMoreSheet';
 import { AdminDashboard } from './AdminDashboard';
 import { SalesDashboard } from './SalesDashboard';
 import { TargetModule } from '../modules/TargetModule';
@@ -34,16 +37,20 @@ export const DashboardContainer: React.FC = () => {
   const { authState } = useAuth();
   const [currentTab, setCurrentTab] = useState<NavigationTab>('dashboard');
   const [isOpenMobileSidebar, setIsOpenMobileSidebar] = useState(false);
+  const [isOpenMoreSheet, setIsOpenMoreSheet] = useState(false);
+  const [isCollapsedSidebar, setIsCollapsedSidebar] = useState<boolean>(() => {
+    return localStorage.getItem('sales_sidebar_collapsed') === 'true';
+  });
+
+  const toggleCollapseSidebar = () => {
+    setIsCollapsedSidebar(prev => {
+      const next = !prev;
+      localStorage.setItem('sales_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   const role = authState.user?.role;
-
-  if (role === 'Sales') {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-sky-500 selection:text-white relative">
-         <SalesAutoTracker />
-      </div>
-    );
-  }
 
   const renderActiveModule = () => {
     switch (currentTab) {
@@ -83,30 +90,68 @@ export const DashboardContainer: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-slate-950 text-slate-100 flex flex-col lg:flex-row selection:bg-sky-500 selection:text-white">
-      {/* Sidebar Navigation */}
+    <div className="h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row selection:bg-sky-500 selection:text-white transition-colors">
+      {/* Desktop Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}
         onTabChange={setCurrentTab}
         isOpenMobile={isOpenMobileSidebar}
         closeMobile={() => setIsOpenMobileSidebar(false)}
+        isCollapsed={isCollapsedSidebar}
+        onToggleCollapse={toggleCollapseSidebar}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
         <Header
           currentTab={currentTab}
           onTabChange={setCurrentTab}
-          toggleSidebarMobile={() => setIsOpenMobileSidebar(!isOpenMobileSidebar)}
+          toggleSidebarMobile={() => setIsOpenMoreSheet(true)}
+          onToggleCollapseSidebar={toggleCollapseSidebar}
+          isSidebarCollapsed={isCollapsedSidebar}
         />
 
-        <div className="flex-1 min-h-0 overflow-y-auto relative">
-          <main className="p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-12">
-            {renderActiveModule()}
+        {/* Real-time Broadcast Marquee News Ticker */}
+        <NewsTickerBar />
+
+        <div className="flex-1 min-h-0 overflow-y-auto relative overscroll-contain">
+          <main className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto pb-28 lg:pb-12">
+            <motion.div
+              key={currentTab}
+              initial={{ opacity: 0, y: 14, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.99 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {renderActiveModule()}
+            </motion.div>
           </main>
         </div>
 
-        <footer className="w-full shrink-0 border-t border-slate-200 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md py-3 z-10">
+        {/* Mobile Bottom App Navigation */}
+        <MobileBottomNav
+          currentTab={currentTab}
+          onTabChange={(tab) => {
+            setCurrentTab(tab);
+            setIsOpenMoreSheet(false);
+          }}
+          onOpenMore={() => setIsOpenMoreSheet(true)}
+          isMoreOpen={isOpenMoreSheet}
+        />
+
+        {/* Mobile "More Apps" Action Sheet */}
+        <MobileMoreSheet
+          isOpen={isOpenMoreSheet}
+          onClose={() => setIsOpenMoreSheet(false)}
+          currentTab={currentTab}
+          onTabChange={(tab) => {
+            setCurrentTab(tab);
+            setIsOpenMoreSheet(false);
+          }}
+        />
+
+        {/* Desktop Footer */}
+        <footer className="hidden lg:block w-full shrink-0 border-t border-slate-200 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md py-3 z-10">
           <div className="max-w-7xl mx-auto px-4 flex justify-center items-center overflow-hidden">
             <motion.div
               initial={{ opacity: 0, y: 15 }}

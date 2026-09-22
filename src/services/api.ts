@@ -1,5 +1,6 @@
 import { User, MorningPlan, EveningReport, GPSRecord, GPSExcelRecord, AttendanceRecord, TargetRecord, CRMOrderRecord, ReferenceRecord, LeaveRecord } from '../types';
 import { getIndianDateString, getIndianDateTimeString, getIndianTimeString } from '../utils/dateUtils';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 export const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyhXWGagj_RY-JEkrNaKA2aNjiSlAOJDEYau6Hm7tCfQ4t7Y03aGZBhgkPWfJrslFrdZg/exec';
 
@@ -246,6 +247,32 @@ export async function loginWithGoogleSheet(idInput: string, passwordInput: strin
   const cleanId = idInput.trim();
   const cleanPass = passwordInput.trim();
 
+  // Primary: If Supabase is configured, authenticate directly via Supabase PostgreSQL table
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .or(`id.ilike.${cleanId},user_name.ilike.${cleanId},gmail.ilike.${cleanId}`)
+        .eq('password', cleanPass)
+        .maybeSingle();
+
+      if (data && !error) {
+        return normalizeUserData({
+          id: data.id,
+          userName: data.user_name || data.userName,
+          role: data.role,
+          gmail: data.gmail,
+          manager: data.manager,
+          crm: data.crm,
+          profileUrl: data.profile_url || data.profileUrl,
+        });
+      }
+    } catch (sbError) {
+      console.warn('Supabase login check notice:', sbError);
+    }
+  }
+
   // Attempt 1: Fetch Login / Users / Data sheet via doGet(?sheet=Login)
   for (const sheetCandidate of ['Login', 'Users', 'Data']) {
     const sheetRows = await fetchSheetData(sheetCandidate);
@@ -355,6 +382,31 @@ export async function submitMorningPlanToSheet(plan: Omit<MorningPlan, 'id' | 'c
     newPlan.address || '',
   ];
 
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.from('morning_plans').upsert([{
+        id: newPlan.id,
+        sales_person_id: newPlan.salesPersonId,
+        sales_person_name: newPlan.salesPersonName,
+        meeting_date: newPlan.meetingDate,
+        party_name: newPlan.partyName,
+        contact_person: newPlan.contactPerson,
+        mobile_number: newPlan.mobileNumber,
+        city: newPlan.city,
+        purpose: newPlan.purpose,
+        expected_business: newPlan.expectedBusiness,
+        priority: newPlan.priority,
+        remarks: newPlan.remarks,
+        status: newPlan.status,
+        latitude: newPlan.latitude,
+        longitude: newPlan.longitude,
+        address: newPlan.address || '',
+      }]);
+    } catch (sbErr) {
+      console.warn('Supabase morning plan save notice:', sbErr);
+    }
+  }
+
   await insertSheetRow('Morning Follow Up', morningFollowUpRow);
   await insertSheetRow('MorningPlan', fullRowData);
 
@@ -366,6 +418,38 @@ export async function submitMorningPlanToSheet(plan: Omit<MorningPlan, 'id' | 'c
  */
 export async function fetchMorningPlansFromSheet(): Promise<MorningPlan[]> {
   try {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('morning_plans')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (data && !error && data.length > 0) {
+          return data.map(d => ({
+            id: d.id,
+            salesPersonId: d.sales_person_id || d.salesPersonId || '',
+            salesPersonName: d.sales_person_name || d.salesPersonName || '',
+            meetingDate: d.meeting_date || d.meetingDate || '',
+            partyName: d.party_name || d.partyName || '',
+            contactPerson: d.contact_person || d.contactPerson || '',
+            mobileNumber: d.mobile_number || d.mobileNumber || '',
+            city: d.city || '',
+            purpose: d.purpose || '',
+            expectedBusiness: Number(d.expected_business || d.expectedBusiness) || 0,
+            priority: d.priority || 'Medium',
+            remarks: d.remarks || '',
+            status: d.status || 'Pending',
+            createdAt: d.created_at || '',
+            latitude: d.latitude,
+            longitude: d.longitude,
+            address: d.address || '',
+          }));
+        }
+      } catch (sbErr) {
+        console.warn('Supabase morning plans fetch notice:', sbErr);
+      }
+    }
     for (const sheetName of ['Morning Follow Up', 'MorningFollowUp', 'MorningPlan']) {
       const rows = await fetchSheetData(sheetName);
       if (rows && rows.length > 1) {
@@ -481,6 +565,41 @@ export async function submitEveningReportToSheet(report: Omit<EveningReport, 'id
     newReport.address || '',
   ];
 
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.from('evening_reports').upsert([{
+        id: newReport.id,
+        morning_plan_id: newReport.morningPlanId || null,
+        sales_person_id: newReport.salesPersonId,
+        sales_person_name: newReport.salesPersonName,
+        meeting_date: newReport.meetingDate || null,
+        party_name: newReport.partyName,
+        address: newReport.address || null,
+        client: newReport.client || null,
+        contact_number: newReport.contactNumber || null,
+        email: newReport.email || null,
+        designation: newReport.designation || null,
+        visited: newReport.visited || 'Yes',
+        meeting_time: newReport.meetingTime || null,
+        discussion: newReport.discussion || newReport.remarks || null,
+        products_discussed: newReport.productsDiscussed || null,
+        requirement: newReport.requirement || null,
+        follow_up_date: newReport.followUpDate || null,
+        expected_order: newReport.expectedOrder || 0,
+        order_probability: newReport.orderProbability || 0,
+        remarks: newReport.remarks || null,
+        photo_url: newReport.photoUrl || null,
+        attachment_urls: newReport.attachmentUrls || null,
+        latitude: newReport.latitude || null,
+        longitude: newReport.longitude || null,
+        status: newReport.status || 'Completed',
+        submitted_at: newReport.submittedAt,
+      }]);
+    } catch (sbErr) {
+      console.warn('Supabase evening report save notice:', sbErr);
+    }
+  }
+
   await insertSheetRow('Evening Follow Up', eveningFollowUp10Cols);
   await insertSheetRow('EveningReport', fullRowData);
 
@@ -492,6 +611,47 @@ export async function submitEveningReportToSheet(report: Omit<EveningReport, 'id
  */
 export async function fetchEveningReportsFromSheet(): Promise<EveningReport[]> {
   try {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('evening_reports')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (data && !error && data.length > 0) {
+          return data.map(d => ({
+            id: d.id,
+            morningPlanId: d.morning_plan_id || d.morningPlanId || '',
+            salesPersonId: d.sales_person_id || d.salesPersonId || '',
+            salesPersonName: d.sales_person_name || d.salesPersonName || '',
+            meetingDate: d.meeting_date || d.meetingDate || '',
+            partyName: d.party_name || d.partyName || '',
+            address: d.address || '',
+            client: d.client || '',
+            contactNumber: d.contact_number || d.contactNumber || '',
+            email: d.email || '',
+            designation: d.designation || '',
+            visited: d.visited || 'Yes',
+            meetingTime: d.meeting_time || d.meetingTime || '',
+            discussion: d.discussion || d.remarks || '',
+            productsDiscussed: d.products_discussed || d.productsDiscussed || '',
+            requirement: d.requirement || '',
+            followUpDate: d.follow_up_date || d.followUpDate || '',
+            expectedOrder: Number(d.expected_order || d.expectedOrder) || 0,
+            orderProbability: Number(d.order_probability || d.orderProbability) || 0,
+            remarks: d.remarks || '',
+            photoUrl: d.photo_url || d.photoUrl || '',
+            attachmentUrls: d.attachment_urls || d.attachmentUrls || '',
+            latitude: d.latitude,
+            longitude: d.longitude,
+            status: d.status || 'Completed',
+            submittedAt: d.submitted_at || '',
+          }));
+        }
+      } catch (sbErr) {
+        console.warn('Supabase evening reports fetch notice:', sbErr);
+      }
+    }
     for (const sheetName of ['Evening Follow Up', 'EveningFollowUp', 'EveningReport']) {
       const rows = await fetchSheetData(sheetName);
       if (rows && rows.length > 1) {
@@ -569,7 +729,7 @@ export async function fetchEveningReportsFromSheet(): Promise<EveningReport[]> {
 }
 
 /**
- * Save GPS Tracking location record to Google Sheet
+ * Save GPS Tracking location record to Google Sheet / Supabase
  */
 export async function saveGPSToSheet(record: Omit<GPSRecord, 'id'>): Promise<GPSRecord> {
   const gpsRecord: GPSRecord = {
@@ -578,6 +738,25 @@ export async function saveGPSToSheet(record: Omit<GPSRecord, 'id'>): Promise<GPS
     time: record.time || getIndianTimeString(),
     id: 'GPS-' + Date.now(),
   };
+
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.from('gps_records').insert([{
+        id: gpsRecord.id,
+        sales_person_id: gpsRecord.salesPersonId,
+        sales_person_name: gpsRecord.salesPersonName,
+        latitude: gpsRecord.latitude,
+        longitude: gpsRecord.longitude,
+        address: gpsRecord.address,
+        date: gpsRecord.date,
+        time: gpsRecord.time,
+        accuracy: gpsRecord.accuracy,
+        action_source: gpsRecord.actionSource || 'Live Check-in',
+      }]);
+    } catch (sbErr) {
+      console.warn('Supabase GPS record save notice:', sbErr);
+    }
+  }
 
   const rowData = [
     gpsRecord.id,
@@ -653,7 +832,7 @@ export async function saveGPSExcelRowsToSheet(records: GPSExcelRecord[]): Promis
 }
 
 /**
- * Fetch GPS records from Google Sheet 'GPS' tab
+ * Fetch GPS records from Google Sheet 'GPS' tab / Supabase
  */
 export async function fetchGPSDataFromSheet(): Promise<{
   liveRecords: GPSRecord[];
@@ -663,6 +842,34 @@ export async function fetchGPSDataFromSheet(): Promise<{
   const excelRecords: GPSExcelRecord[] = [];
 
   try {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('gps_records')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (data && !error && data.length > 0) {
+          data.forEach(d => {
+            liveRecords.push({
+              id: d.id,
+              salesPersonId: d.sales_person_id || d.salesPersonId || '',
+              salesPersonName: d.sales_person_name || d.salesPersonName || '',
+              latitude: Number(d.latitude) || 0,
+              longitude: Number(d.longitude) || 0,
+              address: d.address || '',
+              date: d.date || '',
+              time: d.time || '',
+              accuracy: Number(d.accuracy) || 10,
+              actionSource: d.action_source || d.actionSource || 'Live Check-in',
+            });
+          });
+        }
+      } catch (sbErr) {
+        console.warn('Supabase GPS fetch notice:', sbErr);
+      }
+    }
+
     const rows = await fetchSheetData('GPS');
     if (!rows || rows.length <= 1) {
       return { liveRecords, excelRecords };
@@ -678,18 +885,20 @@ export async function fetchGPSDataFromSheet(): Promise<{
 
       // Live ping check: ID starts with GPS- or contains numeric lat/lng
       if (col0.startsWith('GPS-') || (row.length >= 7 && !isNaN(Number(row[3])) && !isNaN(Number(row[4])) && Number(row[3]) !== 0)) {
-        liveRecords.push({
-          id: col0 || `GPS-${Date.now()}-${i}`,
-          salesPersonId: col1 || 'USR-01',
-          salesPersonName: col2 || 'Sales User',
-          latitude: Number(row[3]) || 0,
-          longitude: Number(row[4]) || 0,
-          address: String(row[5] || 'Recorded Location'),
-          date: String(row[6] || getIndianDateString()),
-          time: String(row[7] || getIndianTimeString()),
-          accuracy: Number(row[8]) || 10,
-          actionSource: String(row[9] || 'Live Check-in'),
-        });
+        if (!liveRecords.some(r => r.id === col0)) {
+          liveRecords.push({
+            id: col0 || `GPS-${Date.now()}-${i}`,
+            salesPersonId: col1 || 'USR-01',
+            salesPersonName: col2 || 'Sales User',
+            latitude: Number(row[3]) || 0,
+            longitude: Number(row[4]) || 0,
+            address: String(row[5] || 'Recorded Location'),
+            date: String(row[6] || getIndianDateString()),
+            time: String(row[7] || getIndianTimeString()),
+            accuracy: Number(row[8]) || 10,
+            actionSource: String(row[9] || 'Live Check-in'),
+          });
+        }
       } else {
         // Treat as 13-column Excel GPS record
         if (col0 || col1 || col2 || row[6] || row[7]) {
@@ -702,54 +911,81 @@ export async function fetchGPSDataFromSheet(): Promise<{
             deviceNumber: String(row[4] || ''),
             resultDate: String(row[5] || ''),
             address: String(row[6] || ''),
-            latitude: String(row[7] || ''),
-            longitude: String(row[8] || ''),
-            accuracy: String(row[9] || ''),
-            distance: String(row[10] || ''),
+            latitude: row[7] || '',
+            longitude: row[8] || '',
+            accuracy: row[9] || '',
+            distance: row[10] || '',
             status: String(row[11] || ''),
             type: String(row[12] || ''),
-            uploadedAt: getIndianDateString(),
           });
         }
       }
     }
   } catch (err) {
-    console.warn('Error fetching GPS sheet data:', err);
+    console.warn('Could not fetch GPS data from Sheet:', err);
   }
 
   return { liveRecords, excelRecords };
 }
 
 /**
- * Fetch targets from Google Sheet 'Target' tab
+ * Fetch targets from Google Sheet 'Target' tab / Supabase
  */
 export async function fetchTargetsFromSheet(): Promise<TargetRecord[]> {
-  const rows = await fetchSheetData('Target');
-  if (!rows || rows.length <= 1) {
+  try {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('targets')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (data && !error && data.length > 0) {
+          return data.map(d => ({
+            id: d.id,
+            timestamp: d.timestamp || d.created_at || '',
+            month: d.month,
+            salesPersonName: d.sales_person_name || d.salesPersonName,
+            totalNewOrders: Number(d.total_new_orders || d.totalNewOrders) || 0,
+            amount: Number(d.amount) || 0,
+            remark: d.remark || '',
+          }));
+        }
+      } catch (sbErr) {
+        console.warn('Supabase targets fetch notice:', sbErr);
+      }
+    }
+
+    const rows = await fetchSheetData('Target');
+    if (!rows || rows.length <= 1) {
+      return [];
+    }
+
+    const targets: TargetRecord[] = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length === 0 || !row[0]) continue;
+
+      targets.push({
+        id: String(row[0] || `TGT-${i}`),
+        timestamp: getIndianDateTimeString(row[1] || new Date()),
+        month: String(row[2] || ''),
+        salesPersonName: String(row[3] || 'All Sales Reps'),
+        totalNewOrders: Number(row[4]) || 0,
+        amount: Number(row[5]) || 0,
+        remark: String(row[6] || ''),
+      });
+    }
+
+    return targets;
+  } catch (err) {
+    console.warn('Error fetching targets:', err);
     return [];
   }
-
-  const targets: TargetRecord[] = [];
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || row.length === 0 || !row[0]) continue;
-
-    targets.push({
-      id: String(row[0] || `TGT-${i}`),
-      timestamp: getIndianDateTimeString(row[1] || new Date()),
-      month: String(row[2] || ''),
-      salesPersonName: String(row[3] || 'All Sales Reps'),
-      totalNewOrders: Number(row[4]) || 0,
-      amount: Number(row[5]) || 0,
-      remark: String(row[6] || ''),
-    });
-  }
-
-  return targets;
 }
 
 /**
- * Assign and save a new target to Google Sheet 'Target' tab
+ * Assign and save a new target to Google Sheet 'Target' tab / Supabase
  */
 export async function assignTargetToSheet(target: Omit<TargetRecord, 'id' | 'timestamp'>): Promise<TargetRecord> {
   const newTarget: TargetRecord = {
@@ -757,6 +993,22 @@ export async function assignTargetToSheet(target: Omit<TargetRecord, 'id' | 'tim
     id: 'TGT-' + Date.now(),
     timestamp: getIndianDateTimeString(),
   };
+
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.from('targets').upsert([{
+        id: newTarget.id,
+        timestamp: newTarget.timestamp,
+        month: newTarget.month,
+        sales_person_name: newTarget.salesPersonName,
+        total_new_orders: newTarget.totalNewOrders,
+        amount: newTarget.amount,
+        remark: newTarget.remark || '',
+      }]);
+    } catch (sbErr) {
+      console.warn('Supabase target save notice:', sbErr);
+    }
+  }
 
   await insertSheetRow('Target', [
     newTarget.id,
@@ -815,49 +1067,75 @@ export async function fetchSalesPersonsFromLoginSheet(): Promise<string[]> {
 }
 
 /**
- * Fetch references from Sheet 'Refrences' tab
- * Columns mapping (13 headers):
- * A) Id | B) Created date | C) Ref Given By | D) Ref Given Company'S Name
- * E) Alloted To Sales Person- Name | F) Alloted By Whom | G) Company Name
- * H) Client Name | I) Designation | J) Client Number | K) Address
- * L) Remarks | M) Next Followup Date
+ * Fetch references from Sheet 'Refrences' tab / Supabase
  */
 export async function fetchReferencesFromSheet(): Promise<ReferenceRecord[]> {
-  const rows = await fetchSheetData('Refrences');
-  if (!rows || rows.length <= 1) {
+  try {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('reference_records')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (data && !error && data.length > 0) {
+          return data.map(d => ({
+            id: d.id,
+            createdAt: d.created_at || '',
+            refGivenBy: d.ref_given_by || '',
+            refGivenCompanyName: d.ref_given_company_name || '',
+            allottedToSalesPersonName: d.allotted_to_sales_person_name || '',
+            allottedByWhom: d.allotted_by_whom || '',
+            companyName: d.company_name || '',
+            clientName: d.client_name || '',
+            designation: d.designation || '',
+            clientNumber: d.client_number || '',
+            address: d.address || '',
+            remarks: d.remarks || '',
+            nextFollowupDate: d.next_followup_date || '',
+          }));
+        }
+      } catch (sbErr) {
+        console.warn('Supabase references fetch notice:', sbErr);
+      }
+    }
+
+    const rows = await fetchSheetData('Refrences');
+    if (!rows || rows.length <= 1) {
+      return [];
+    }
+
+    const references: ReferenceRecord[] = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length === 0 || !row.some(cell => cell)) continue;
+
+      references.push({
+        id: String(row[0] || `REF-${i}`),
+        createdAt: String(row[1] || ''),
+        refGivenBy: String(row[2] || ''),
+        refGivenCompanyName: String(row[3] || ''),
+        allottedToSalesPersonName: String(row[4] || ''),
+        allottedByWhom: String(row[5] || ''),
+        companyName: String(row[6] || ''),
+        clientName: String(row[7] || ''),
+        designation: String(row[8] || ''),
+        clientNumber: String(row[9] || ''),
+        address: String(row[10] || ''),
+        remarks: String(row[11] || ''),
+        nextFollowupDate: String(row[12] || ''),
+      });
+    }
+
+    return references;
+  } catch (err) {
+    console.warn('Error fetching references:', err);
     return [];
   }
-
-  const references: ReferenceRecord[] = [];
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || row.length === 0 || !row.some(cell => cell)) continue;
-
-    references.push({
-      id: String(row[0] || `REF-${i}`),
-      createdAt: String(row[1] || ''),
-      refGivenBy: String(row[2] || ''),
-      refGivenCompanyName: String(row[3] || ''),
-      allottedToSalesPersonName: String(row[4] || ''),
-      allottedByWhom: String(row[5] || ''),
-      companyName: String(row[6] || ''),
-      clientName: String(row[7] || ''),
-      designation: String(row[8] || ''),
-      clientNumber: String(row[9] || ''),
-      address: String(row[10] || ''),
-      remarks: String(row[11] || ''),
-      nextFollowupDate: String(row[12] || ''),
-    });
-  }
-
-  return references;
 }
 
 /**
- * Submit Reference to Sheet 'Refrences' tab
- * Writes 13 columns: Id, Created date, Ref Given By, Ref Given Company'S Name,
- * Alloted To Sales Person- Name, Alloted By Whom, Company Name, Client Name,
- * Designation, Client Number, Address, Remarks, Next Followup Date
+ * Submit Reference to Sheet 'Refrences' tab / Supabase
  */
 export async function submitReferenceToSheet(ref: Omit<ReferenceRecord, 'id'>): Promise<ReferenceRecord> {
   const newRef: ReferenceRecord = {
@@ -865,6 +1143,27 @@ export async function submitReferenceToSheet(ref: Omit<ReferenceRecord, 'id'>): 
     id: 'REF-' + Date.now(),
     createdAt: ref.createdAt || getIndianDateTimeString(),
   };
+
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.from('reference_records').upsert([{
+        id: newRef.id,
+        ref_given_by: newRef.refGivenBy || '',
+        ref_given_company_name: newRef.refGivenCompanyName || '',
+        allotted_to_sales_person_name: newRef.allottedToSalesPersonName || '',
+        allotted_by_whom: newRef.allottedByWhom || '',
+        company_name: newRef.companyName,
+        client_name: newRef.clientName,
+        designation: newRef.designation || '',
+        client_number: newRef.clientNumber || '',
+        address: newRef.address || '',
+        remarks: newRef.remarks || '',
+        next_followup_date: newRef.nextFollowupDate || '',
+      }]);
+    } catch (sbErr) {
+      console.warn('Supabase reference save notice:', sbErr);
+    }
+  }
 
   await insertSheetRow('Refrences', [
     newRef.id,
@@ -886,61 +1185,104 @@ export async function submitReferenceToSheet(ref: Omit<ReferenceRecord, 'id'>): 
 }
 
 /**
- * Fetch leave requests from Sheet 'Leave' tab
- * Columns mapping:
- * A) Timestamp | B) LR-Unique No. | C) Requested By | D) Departments
- * E) Total No of leave days | F) Job location | G) Date of leave FROM | H) TO
- * I) Reason for Taking | J) Remark | K) Image
- * ... | O) Approved By | P) Status
+ * Fetch leave requests from Sheet 'Leave' tab / Supabase
  */
 export async function fetchLeavesFromSheet(): Promise<LeaveRecord[]> {
-  const rows = await fetchSheetData('Leave');
-  if (!rows || rows.length <= 1) {
+  try {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('leave_records')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (data && !error && data.length > 0) {
+          return data.map(d => ({
+            id: d.id,
+            timestamp: d.timestamp || d.created_at || '',
+            lrNumber: d.lr_number || '',
+            requestedBy: d.requested_by || '',
+            department: d.department || 'Sales',
+            totalLeaveDays: Number(d.total_leave_days) || 1,
+            jobLocation: d.job_location || '',
+            dateFrom: d.date_from || '',
+            dateTo: d.date_to || '',
+            reason: d.reason || '',
+            remark: d.remark || '',
+            imageUrl: d.image_url || '',
+            approvedBy: d.approved_by || '',
+            status: d.status || 'Approved',
+          }));
+        }
+      } catch (sbErr) {
+        console.warn('Supabase leaves fetch notice:', sbErr);
+      }
+    }
+
+    const rows = await fetchSheetData('Leave');
+    if (!rows || rows.length <= 1) {
+      return [];
+    }
+
+    const leaves: LeaveRecord[] = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.length === 0 || !row.some(cell => cell)) continue;
+
+      const requestedBy = String(row[2] || '').trim();
+      if (!requestedBy) continue;
+
+      const rawFrom = row[6] ? String(row[6]).trim() : '';
+      const rawTo = row[7] ? String(row[7]).trim() : '';
+
+      leaves.push({
+        id: String(row[1] || `LV-${i}`),
+        timestamp: getIndianDateTimeString(row[0] || new Date()),
+        lrNumber: String(row[1] || ''),
+        requestedBy,
+        department: String(row[3] || ''),
+        totalLeaveDays: Number(row[4]) || 0,
+        jobLocation: String(row[5] || ''),
+        dateFrom: rawFrom ? getIndianDateString(rawFrom) : '',
+        dateTo: rawTo ? getIndianDateString(rawTo) : (rawFrom ? getIndianDateString(rawFrom) : ''),
+        reason: String(row[8] || ''),
+        remark: String(row[9] || ''),
+        imageUrl: String(row[10] || ''),
+        approvedBy: String(row[14] || ''),
+        status: String(row[15] || ''),
+      });
+    }
+
+    return leaves;
+  } catch (err) {
+    console.warn('Error fetching leaves:', err);
     return [];
   }
-
-  const leaves: LeaveRecord[] = [];
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    if (!row || row.length === 0 || !row.some(cell => cell)) continue;
-
-    const requestedBy = String(row[2] || '').trim();
-    if (!requestedBy) continue;
-
-    const rawFrom = row[6] ? String(row[6]).trim() : '';
-    const rawTo = row[7] ? String(row[7]).trim() : '';
-
-    leaves.push({
-      id: String(row[1] || `LV-${i}`),
-      timestamp: getIndianDateTimeString(row[0] || new Date()),
-      lrNumber: String(row[1] || ''),
-      requestedBy,
-      department: String(row[3] || ''),
-      totalLeaveDays: Number(row[4]) || 0,
-      jobLocation: String(row[5] || ''),
-      dateFrom: rawFrom ? getIndianDateString(rawFrom) : '',
-      dateTo: rawTo ? getIndianDateString(rawTo) : (rawFrom ? getIndianDateString(rawFrom) : ''),
-      reason: String(row[8] || ''),
-      remark: String(row[9] || ''),
-      imageUrl: String(row[10] || ''),
-      approvedBy: String(row[14] || ''),
-      status: String(row[15] || ''),
-    });
-  }
-
-  return leaves;
 }
-
-
 
 /**
  * Fetch CRM Orders for target achievement calculation
- * Crm New Lead Order Recived tab
- * Column K (Index 10) - Sales Person Name
- * Column BI (Index 60) - Order Actual Date
  */
 export async function fetchCRMOrdersFromSheet(): Promise<CRMOrderRecord[]> {
   try {
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('crm_orders')
+          .select('*');
+
+        if (data && !error && data.length > 0) {
+          return data.map(d => ({
+            salesPersonName: d.sales_person_name,
+            orderActualDate: d.order_actual_date || '',
+            orderStatus: d.order_status || 'Active',
+          }));
+        }
+      } catch (sbErr) {
+        console.warn('Supabase CRM orders fetch notice:', sbErr);
+      }
+    }
+
     const rows = await fetchSheetData('Crm New Lead Order Recived');
     if (!rows || rows.length <= 1) {
       return [];

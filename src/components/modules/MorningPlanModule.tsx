@@ -390,12 +390,12 @@ export const MorningPlanModule: React.FC = () => {
             <select
               value={selectedDateFilter}
               onChange={(e) => setSelectedDateFilter(e.target.value)}
-              className="bg-transparent text-xs text-amber-300 font-semibold focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-xs text-amber-700 dark:text-amber-300 font-bold focus:outline-none cursor-pointer pr-1"
             >
-              <option value={todayDate} className="bg-slate-900 text-white">
+              <option value={todayDate} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                 Today ({todayDate})
               </option>
-              <option value="ALL" className="bg-slate-900 text-white">
+              <option value="ALL" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                 All Dates
               </option>
               {availableDates
@@ -479,88 +479,100 @@ export const MorningPlanModule: React.FC = () => {
         /* Grouped View by Sales Person */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {groupedBySalesPerson.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center text-center py-16 px-6 bg-slate-900 border border-dashed border-slate-700 rounded-2xl">
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="col-span-full flex flex-col items-center justify-center text-center py-16 px-6 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl shadow-xs"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 dark:text-amber-400 mb-4">
                 <Sun className="w-8 h-8" />
               </div>
-              <p className="text-base font-bold text-white">No Morning Plans Found</p>
-              <p className="text-xs text-slate-400 mt-1.5 max-w-sm">
+              <p className="text-base font-bold text-slate-900 dark:text-white">No Morning Plans Found</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-sm">
                 No sales executive submitted morning follow-ups for {selectedDateFilter === 'ALL' ? 'the selected search' : selectedDateFilter}.
               </p>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setShowModal(true)}
                 className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create Morning Plan</span>
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           ) : (
             groupedBySalesPerson.map((group, groupIdx) => (
-              <div
+              <motion.div
                 key={`group-${group.salesPersonName}-${group.meetingDate}-${groupIdx}`}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: groupIdx * 0.05, duration: 0.28, type: 'spring', stiffness: 350, damping: 25 }}
+                whileHover={{ y: -3, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setSelectedGroupDetails(group)}
-                className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-all duration-200 space-y-4 cursor-pointer hover:shadow-xl hover:shadow-amber-950/20 hover:-translate-y-0.5 group relative overflow-hidden"
+                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500/50 dark:hover:border-amber-500/50 transition-all duration-200 space-y-4 cursor-pointer hover:shadow-xl hover:shadow-amber-500/10 group relative overflow-hidden text-slate-900 dark:text-slate-100"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center font-bold text-amber-400 group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center font-bold text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
                       {group.salesPersonName.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-bold text-base text-white group-hover:text-amber-400 transition-colors">
+                      <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                         {group.salesPersonName}
                       </h3>
-                      <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                        <Calendar className="w-3 h-3 text-slate-500" />
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                        <Calendar className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                         <span>{group.meetingDate}</span>
                       </p>
                     </div>
                   </div>
 
                   {/* Company Count Pill */}
-                  <div className="px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-extrabold text-xs flex items-center gap-1.5 shadow-sm shrink-0">
-                    <Building className="w-3.5 h-3.5 text-amber-400" />
+                  <div className="px-3 py-1.5 rounded-full bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/30 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 font-extrabold text-xs flex items-center gap-1.5 shadow-xs shrink-0">
+                    <Building className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                     <span>{group.companyCount} {group.companyCount === 1 ? 'Company' : 'Companies'}</span>
                   </div>
                 </div>
 
                 {/* Companies Preview List */}
-                <div className="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-xs">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <div className="space-y-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 text-xs">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between">
                     <span>Planned Visit List</span>
-                    <span className="text-amber-400 font-mono">{group.companyCount} total</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-mono">{group.companyCount} total</span>
                   </p>
                   <ul className="space-y-1.5">
                     {group.plans.slice(0, 4).map((p, idx) => (
-                      <li key={`prev-${p.id || 'plan'}-${idx}`} className="flex items-center justify-between text-slate-300 text-xs truncate">
+                      <li key={`prev-${p.id || 'plan'}-${idx}`} className="flex items-center justify-between text-slate-700 dark:text-slate-300 text-xs truncate">
                         <span className="truncate font-medium flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 shrink-0"></span>
                           <span className="truncate">{p.partyName}</span>
                         </span>
                         {p.city && p.city !== 'Location' && (
-                          <span className="text-[10px] text-slate-400 shrink-0 ml-2 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 shrink-0 ml-2 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800">
                             {p.city}
                           </span>
                         )}
                       </li>
                     ))}
                     {group.plans.length > 4 && (
-                      <li className="text-[11px] text-amber-400 font-semibold pt-1">
+                      <li className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold pt-1">
                         + {group.plans.length - 4} more companies...
                       </li>
                     )}
                   </ul>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-amber-400 font-semibold">
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-3.5 h-3.5" />
+                {/* Bottom Footer Actions */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                  <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[11px] group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    <Eye className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                     Click to View Details
                   </span>
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
-              </div>
+              </motion.div>
             ))
           )}
         </div>
@@ -568,61 +580,69 @@ export const MorningPlanModule: React.FC = () => {
         /* Detailed List View */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredPlans.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center text-center py-16 px-6 bg-slate-900 border border-dashed border-slate-700 rounded-2xl">
-              <div className="w-16 h-16 rounded-2xl bg-slate-800/60 border border-slate-700 flex items-center justify-center text-slate-400 mb-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="col-span-full flex flex-col items-center justify-center text-center py-16 px-6 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl shadow-xs"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 mb-4">
                 <Building2 className="w-8 h-8" />
               </div>
-              <p className="text-base font-bold text-white">No Company Plans Found</p>
-              <p className="text-xs text-slate-400 mt-1.5 max-w-sm">
+              <p className="text-base font-bold text-slate-900 dark:text-white">No Company Plans Found</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-sm">
                 Nothing matches the current date or search filters. Try adjusting them.
               </p>
-            </div>
+            </motion.div>
           ) : (
             filteredPlans.map((plan, planIdx) => (
-              <div
+              <motion.div
                 key={`list-${plan.id || 'plan'}-${planIdx}`}
-                className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all space-y-3 relative overflow-hidden"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: planIdx * 0.03, duration: 0.22 }}
+                whileHover={{ y: -2 }}
+                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-3 relative overflow-hidden shadow-xs"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                       {plan.id}
                     </span>
-                    <h3 className="font-bold text-base text-white mt-1">
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white mt-1">
                       {plan.partyName}
                     </h3>
                   </div>
                   <div className="flex flex-col gap-2 items-end">
-                    <span className="text-xs font-bold text-amber-300 bg-amber-950/60 border border-amber-800/60 px-2.5 py-1 rounded-full flex items-center gap-1">
-                      <User className="w-3 h-3 text-amber-400" />
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <User className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                       {plan.salesPersonName}
                     </span>
                     <div className="flex gap-2">
-                      <button onClick={() => setEditingPlan(plan)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors cursor-pointer" title="Edit">
+                      <button onClick={() => setEditingPlan(plan)} className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-700" title="Edit">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => handleDeletePlan(plan.id)} className="p-1.5 bg-rose-950/30 hover:bg-rose-950/50 text-rose-400 rounded-lg transition-colors cursor-pointer" title="Delete">
+                      <button onClick={() => handleDeletePlan(plan.id)} className="p-1.5 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 rounded-lg transition-colors cursor-pointer border border-rose-200 dark:border-rose-900/50" title="Delete">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2 text-xs text-slate-300">
+                <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
                   {plan.address && (
-                    <p className="flex items-center gap-1.5 text-slate-400">
-                      <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <p className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                      <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                       <span>{plan.address}</span>
                     </p>
                   )}
                   {plan.remarks && (
-                    <p className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-slate-300">
-                      <strong className="text-amber-400">Remark:</strong> {plan.remarks}
+                    <p className="bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-300">
+                      <strong className="text-amber-600 dark:text-amber-400">Remark:</strong> {plan.remarks}
                     </p>
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
                     {plan.meetingDate}
@@ -633,7 +653,7 @@ export const MorningPlanModule: React.FC = () => {
                       href={`https://www.google.com/maps?q=${plan.latitude},${plan.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-emerald-400 hover:underline"
+                      className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
                       GPS Logged
@@ -645,7 +665,7 @@ export const MorningPlanModule: React.FC = () => {
                     </span>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))
           )}
         </div>
@@ -659,22 +679,22 @@ export const MorningPlanModule: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto text-slate-900 dark:text-slate-100"
             >
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
                     <Sun className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">Create Morning Plan</h2>
-                    <p className="text-xs text-slate-400">Fill date, sales executive, and target companies</p>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Create Morning Plan</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Fill date, sales executive, and target companies</p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
@@ -683,31 +703,31 @@ export const MorningPlanModule: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      Date (DD-MM-YYYY) <span className="text-rose-400">*</span>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                      Date (DD-MM-YYYY) <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="date"
                       value={convertDDMMYYYYToInputDate(meetingDate)}
                       onChange={(e) => setMeetingDate(convertInputDateToDDMMYYYY(e.target.value))}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      Sales Person Name <span className="text-rose-400">*</span>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                      Sales Person Name <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative">
                       <select
                         value={salesPersonName}
                         onChange={(e) => setSalesPersonName(e.target.value)}
-                        className="w-full p-2.5 pr-8 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 appearance-none cursor-pointer"
+                        className="w-full p-2.5 pr-8 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-amber-500 appearance-none cursor-pointer"
                         required
                       >
                         {salesPersonsList.map((name) => (
-                          <option key={name} value={name}>
+                          <option key={name} value={name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                             {name}
                           </option>
                         ))}
@@ -719,15 +739,15 @@ export const MorningPlanModule: React.FC = () => {
 
                 {/* Day Status: Visiting Clients / On Leave / Travelling */}
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1.5">Today's Status</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1.5">Today's Status</label>
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => setDayStatus('visit')}
-                      className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer ${
+                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
                         dayStatus === 'visit'
-                          ? 'bg-amber-500 border-amber-500 text-slate-950'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                          ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/25'
+                          : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <Building className="w-3.5 h-3.5" />
@@ -736,10 +756,10 @@ export const MorningPlanModule: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setDayStatus('leave')}
-                      className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer ${
+                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
                         dayStatus === 'leave'
-                          ? 'bg-amber-500 border-amber-500 text-slate-950'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                          ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/25'
+                          : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <UserX className="w-3.5 h-3.5" />
@@ -748,10 +768,10 @@ export const MorningPlanModule: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setDayStatus('travel')}
-                      className={`flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer ${
+                      className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
                         dayStatus === 'travel'
-                          ? 'bg-amber-500 border-amber-500 text-slate-950'
-                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                          ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/25'
+                          : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <Plane className="w-3.5 h-3.5" />
@@ -762,49 +782,49 @@ export const MorningPlanModule: React.FC = () => {
 
                 {dayStatus !== 'visit' ? (
                   /* Leave / Travelling: just a remark, no company visits needed */
-                  <div className="pt-2 border-t border-slate-800">
-                    <label className="block text-slate-300 font-semibold mb-1">
-                      Remark <span className="text-rose-400">*</span>
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                      Remark <span className="text-rose-500">*</span>
                     </label>
                     <textarea
                       value={statusRemark}
                       onChange={(e) => setStatusRemark(e.target.value)}
                       rows={3}
                       placeholder={dayStatus === 'leave' ? 'e.g. On leave due to fever, back tomorrow' : 'e.g. Travelling to Raipur, expected arrival 6 PM'}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500"
+                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-amber-500"
                       required
                     />
                   </div>
                 ) : (
                 <>
                 {/* Dynamic List of Companies */}
-                <div className="space-y-4 pt-2 border-t border-slate-800">
+                <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Building className="w-3.5 h-3.5 text-amber-400" />
+                    <label className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <Building className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                       Companies / Visits ({companies.length})
                     </label>
                     <button
                       type="button"
                       onClick={addCompanyRow}
-                      className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[11px] font-semibold flex items-center gap-1 border border-amber-500/30 transition-all cursor-pointer"
+                      className="px-3 py-1.5 bg-amber-500/15 dark:bg-amber-500/20 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 rounded-xl text-[11px] font-bold flex items-center gap-1.5 border border-amber-500/40 transition-all cursor-pointer shadow-xs"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                       <span>Add Another Company</span>
                     </button>
                   </div>
 
                   {companies.map((company, index) => (
-                    <div key={company.id} className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-3 relative">
-                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-800/60">
-                        <span className="font-semibold text-slate-300 text-[11px]">
+                    <div key={company.id} className="p-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3 relative">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800/60">
+                        <span className="font-bold text-slate-800 dark:text-slate-300 text-[11px]">
                           Company #{index + 1}
                         </span>
                         {companies.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removeCompanyRow(company.id)}
-                            className="text-rose-400 hover:text-rose-300 p-1 rounded-md hover:bg-rose-950/40 transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                            className="text-rose-600 dark:text-rose-400 hover:text-rose-700 p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
                             title="Remove Company"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -814,38 +834,38 @@ export const MorningPlanModule: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-slate-300 font-medium mb-1 text-[11px]">
-                          Company Name <span className="text-rose-400">*</span>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 text-[11px]">
+                          Company Name <span className="text-rose-500">*</span>
                         </label>
                         <input
                           type="text"
                           value={company.partyName}
                           onChange={(e) => updateCompanyField(company.id, 'partyName', e.target.value)}
                           placeholder="e.g. Reliance Logistics Pvt Ltd"
-                          className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-amber-500"
+                          className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-amber-500"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-slate-300 font-medium mb-1 text-[11px]">Address</label>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 text-[11px]">Address</label>
                         <input
                           type="text"
                           value={company.address}
                           onChange={(e) => updateCompanyField(company.id, 'address', e.target.value)}
                           placeholder="e.g. Plot 42, BKC Industrial Area, Mumbai"
-                          className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-amber-500"
+                          className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-amber-500"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-slate-300 font-medium mb-1 text-[11px]">Remark</label>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 text-[11px]">Remark</label>
                         <input
                           type="text"
                           value={company.remarks}
                           onChange={(e) => updateCompanyField(company.id, 'remarks', e.target.value)}
                           placeholder="e.g. Follow up regarding Q3 lubricants order"
-                          className="w-full p-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-amber-500"
+                          className="w-full p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-amber-500"
                         />
                       </div>
                     </div>
@@ -854,8 +874,8 @@ export const MorningPlanModule: React.FC = () => {
                 </>
                 )}
 
-                <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-xl text-[11px] text-amber-200 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl text-[11px] text-amber-900 dark:text-amber-200 flex items-center gap-2 font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
                   <span>GPS location will be tagged automatically upon submission.</span>
                 </div>
 
@@ -863,14 +883,14 @@ export const MorningPlanModule: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs transition-all disabled:opacity-50 cursor-pointer shadow-md shadow-amber-500/25"
                   >
                     {isSubmitting ? (
                       <>
@@ -903,22 +923,22 @@ export const MorningPlanModule: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto text-slate-900 dark:text-slate-100"
             >
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-lg shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-lg shrink-0">
                     {selectedGroupDetails.salesPersonName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <span>{selectedGroupDetails.salesPersonName}</span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold">
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold">
                         {selectedGroupDetails.companyCount} {selectedGroupDetails.companyCount === 1 ? 'Company' : 'Companies'}
                       </span>
                     </h2>
-                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                       <span>Meeting Date: <strong>{selectedGroupDetails.meetingDate}</strong></span>
                     </p>
                   </div>
@@ -926,7 +946,7 @@ export const MorningPlanModule: React.FC = () => {
 
                 <button
                   onClick={() => setSelectedGroupDetails(null)}
-                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -934,7 +954,7 @@ export const MorningPlanModule: React.FC = () => {
 
               {/* Companies Breakdown List */}
               <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                   <Building2 className="w-4 h-4" />
                   <span>Planned Company Visits ({selectedGroupDetails.plans.length})</span>
                 </h3>
@@ -943,44 +963,44 @@ export const MorningPlanModule: React.FC = () => {
                   {selectedGroupDetails.plans.map((plan, idx) => (
                     <div
                       key={`modal-${plan.id || 'plan'}-${idx}`}
-                      className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-2 hover:border-slate-700 transition-colors"
+                      className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-2 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-xs flex items-center justify-center font-bold">
+                          <span className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 font-mono text-xs flex items-center justify-center font-bold">
                             {idx + 1}
                           </span>
-                          <h4 className="font-bold text-sm text-white">{plan.partyName}</h4>
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white">{plan.partyName}</h4>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono text-slate-500 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                          <span className="text-[10px] font-mono text-slate-500 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800">
                             {plan.id}
                           </span>
-                          <button onClick={(e) => { e.stopPropagation(); setEditingPlan(plan); }} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md transition-colors cursor-pointer" title="Edit">
+                          <button onClick={(e) => { e.stopPropagation(); setEditingPlan(plan); }} className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md transition-colors cursor-pointer border border-slate-200 dark:border-slate-700" title="Edit">
                             <Edit2 className="w-3 h-3" />
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDeletePlan(plan.id); }} className="p-1.5 bg-rose-950/30 hover:bg-rose-950/50 text-rose-400 rounded-md transition-colors cursor-pointer" title="Delete">
+                          <button onClick={(e) => { e.stopPropagation(); handleDeletePlan(plan.id); }} className="p-1.5 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 rounded-md transition-colors cursor-pointer border border-rose-200 dark:border-rose-900/50" title="Delete">
                             <Trash2 className="w-3 h-3" />
                           </button>
                         </div>
                       </div>
 
                       {plan.address && (
-                        <p className="text-xs text-slate-300 flex items-center gap-1.5 pl-8">
-                          <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        <p className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 pl-8">
+                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                           <span>{plan.address}</span>
                         </p>
                       )}
 
                       {plan.remarks && (
-                        <div className="ml-8 p-2.5 bg-slate-900/90 rounded-xl border border-slate-800 text-xs text-slate-300">
-                          <strong className="text-amber-400">Remark:</strong> {plan.remarks}
+                        <div className="ml-8 p-2.5 bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-300">
+                          <strong className="text-amber-600 dark:text-amber-400">Remark:</strong> {plan.remarks}
                         </div>
                       )}
 
-                      <div className="ml-8 pt-1 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-800/40">
+                      <div className="ml-8 pt-1 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-200 dark:border-slate-800/40">
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-slate-500" />
+                          <Clock className="w-3 h-3 text-slate-400" />
                           Submitted: {plan.createdAt || plan.meetingDate}
                         </span>
 
@@ -989,7 +1009,7 @@ export const MorningPlanModule: React.FC = () => {
                             href={`https://www.google.com/maps?q=${plan.latitude},${plan.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-emerald-400 hover:underline font-semibold"
+                            className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>GPS Location</span>
@@ -1004,10 +1024,10 @@ export const MorningPlanModule: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-3 border-t border-slate-800">
+              <div className="flex justify-end pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button
                   onClick={() => setSelectedGroupDetails(null)}
-                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs cursor-pointer shadow-md shadow-amber-500/25"
                 >
                   Close
                 </button>
@@ -1025,67 +1045,67 @@ export const MorningPlanModule: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto text-slate-900 dark:text-slate-100"
             >
-              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400">
                     <Edit2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">Edit Plan</h2>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Plan</h2>
                     <p className="text-[11px] font-mono text-slate-500 mt-0.5">{editingPlan.id}</p>
                   </div>
                 </div>
-                <button onClick={() => setEditingPlan(null)} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">
+                <button onClick={() => setEditingPlan(null)} className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <form onSubmit={handleEditSubmit} className="space-y-4 text-xs">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Company Name <span className="text-rose-400">*</span></label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Company Name <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
                     value={editingPlan.partyName}
                     onChange={(e) => setEditingPlan({ ...editingPlan, partyName: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-500 focus:outline-none"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Meeting Date (DD-MM-YYYY) <span className="text-rose-400">*</span></label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Meeting Date (DD-MM-YYYY) <span className="text-rose-500">*</span></label>
                   <input
                     type="date"
                     value={convertDDMMYYYYToInputDate(editingPlan.meetingDate)}
                     onChange={(e) => setEditingPlan({ ...editingPlan, meetingDate: convertInputDateToDDMMYYYY(e.target.value) })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-500 focus:outline-none"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">City / Location</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">City / Location</label>
                   <input
                     type="text"
                     value={editingPlan.city}
                     onChange={(e) => setEditingPlan({ ...editingPlan, city: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-500 focus:outline-none"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Remarks</label>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Remarks</label>
                   <textarea
                     value={editingPlan.remarks}
                     onChange={(e) => setEditingPlan({ ...editingPlan, remarks: e.target.value })}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:border-amber-500 focus:outline-none min-h-[80px]"
+                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none min-h-[80px]"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
-                  <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold">
                     Cancel
                   </button>
-                  <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all disabled:opacity-50">
+                  <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold transition-all disabled:opacity-50 shadow-md shadow-amber-500/25">
                     {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                     Save Changes
                   </button>

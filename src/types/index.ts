@@ -186,3 +186,14 @@ export interface ReportFilter {
   status: string;
   product: string;
 }
+
+export interface AdminNotice {
+  id: string;
+  title: string;
+  message: string;
+  priority: 'urgent' | 'important' | 'info';
+  createdAt: string;
+  sender: string;
+  isActive: boolean;
+}
+

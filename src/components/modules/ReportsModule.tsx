@@ -525,21 +525,21 @@ export const ReportsModule: React.FC = () => {
       {/* Visit Calendar + Monthly Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Calendar Card */}
-        <div className="relative overflow-hidden p-4 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/30 border border-slate-800/80 shadow-xl shadow-slate-950/30 space-y-3">
+        <div className="relative overflow-hidden p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 shadow-sm dark:shadow-xl space-y-3">
           <div className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 bg-indigo-500/10 rounded-full blur-3xl" />
 
           <div className="relative flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-sky-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 shadow-lg shadow-indigo-950/40">
+              <div className="w-11 h-11 rounded-2xl bg-indigo-50 dark:bg-gradient-to-br dark:from-indigo-500/20 dark:to-sky-500/10 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-sm">
                 <Calendar className="w-5 h-5" />
               </div>
-              <h2 className="font-bold text-base text-white">Visit Calendar</h2>
+              <h2 className="font-bold text-base text-slate-900 dark:text-white">Visit Calendar</h2>
             </div>
 
             <select
               value={calendarSalesPerson}
               onChange={(e) => setCalendarSalesPerson(e.target.value)}
-              className="p-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500"
+              className="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
             >
               <option value="All">All Sales Reps</option>
               {salesPersons.map(sp => (
@@ -549,7 +549,7 @@ export const ReportsModule: React.FC = () => {
           </div>
 
           {monthSummary.pending > 0 && (
-            <div className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-semibold">
+            <div className="relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 dark:bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-[11px] font-bold">
               <Clock className="w-3 h-3" />
               <span>Pending Visits: {monthSummary.pending}</span>
             </div>
@@ -559,7 +559,7 @@ export const ReportsModule: React.FC = () => {
             <button
               type="button"
               onClick={goToPrevMonth}
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
               title="Previous Month"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -567,7 +567,7 @@ export const ReportsModule: React.FC = () => {
             <button
               type="button"
               onClick={goToCurrentMonth}
-              className="text-base font-bold text-white hover:text-indigo-300 transition-colors cursor-pointer"
+              className="text-base font-bold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors cursor-pointer"
               title={`Jump to ${currentMonthLabel}`}
             >
               {MONTH_NAMES[calendarMonthDate.getMonth()]} {calendarMonthDate.getFullYear()}
@@ -575,7 +575,7 @@ export const ReportsModule: React.FC = () => {
             <button
               type="button"
               onClick={goToNextMonth}
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
               title="Next Month"
             >
               <ChevronRight className="w-4 h-4" />
@@ -713,31 +713,31 @@ export const ReportsModule: React.FC = () => {
               <div className="w-7 h-7 mx-auto rounded-full bg-emerald-500 flex items-center justify-center text-white">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
-              <p className="text-lg font-black text-emerald-400">{monthSummary.actual}</p>
-              <p className="text-[9px] font-bold uppercase tracking-wide text-emerald-300/80">Actual</p>
+              <p className="text-lg font-black text-emerald-700 dark:text-emerald-400">{monthSummary.actual}</p>
+              <p className="text-[9px] font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300/80">Actual</p>
             </div>
 
             <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-center space-y-1">
-              <div className="w-7 h-7 mx-auto rounded-full bg-amber-400 flex items-center justify-center text-slate-950">
+              <div className="w-7 h-7 mx-auto rounded-full bg-amber-500 flex items-center justify-center text-white">
                 <Clock className="w-4 h-4" />
               </div>
-              <p className="text-lg font-black text-amber-400">{monthSummary.pending}</p>
-              <p className="text-[9px] font-bold uppercase tracking-wide text-amber-300/80">Pending</p>
+              <p className="text-lg font-black text-amber-700 dark:text-amber-400">{monthSummary.pending}</p>
+              <p className="text-[9px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300/80">Pending</p>
             </div>
 
             <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-center space-y-1">
               <div className="w-7 h-7 mx-auto rounded-full bg-sky-500 flex items-center justify-center text-white">
                 <Building2 className="w-4 h-4" />
               </div>
-              <p className="text-lg font-black text-sky-400">{monthSummary.planned}</p>
-              <p className="text-[9px] font-bold uppercase tracking-wide text-sky-300/80">Planned</p>
+              <p className="text-lg font-black text-sky-700 dark:text-sky-400">{monthSummary.planned}</p>
+              <p className="text-[9px] font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300/80">Planned</p>
             </div>
 
             <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-center space-y-1">
               <div className="w-7 h-7 mx-auto rounded-full bg-rose-500 flex items-center justify-center text-white">
                 <UserX className="w-4 h-4" />
               </div>
-              <p className="text-lg font-black text-rose-400">{monthSummary.leave}</p>
+              <p className="text-lg font-black text-rose-700 dark:text-rose-400">{monthSummary.leave}</p>
               <p className="text-[9px] font-bold uppercase tracking-wide text-rose-300/80">On Leave</p>
             </div>
 
