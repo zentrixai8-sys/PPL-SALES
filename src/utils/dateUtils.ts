@@ -132,6 +132,92 @@ export function isDateWithinRange(dateStr: string, fromStr: string, toStr: strin
 }
 
 /**
+ * Universal date parser that handles:
+ * - DD-MM-YYYY / DD/MM/YYYY with or without time (12hr or 24hr)
+ * - YYYY-MM-DD / ISO strings (e.g. 2026-09-22T02:59:00 or 2026-09-22T 02:59 AM)
+ * - Excel date serial numbers (e.g. 45678.1234)
+ * - Timestamps and Date instances
+ */
+export function parseUniversalDate(val: any): Date | null {
+  if (val === undefined || val === null || val === '') return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+
+  // Excel serial number check
+  const num = Number(val);
+  if (!isNaN(num) && num > 30000 && num < 60000) {
+    const totalMs = Math.round((num - 25569) * 86400 * 1000);
+    const jsDate = new Date(totalMs);
+    return isNaN(jsDate.getTime()) ? null : jsDate;
+  }
+
+  const str = String(val).trim();
+  if (!str) return null;
+
+  // 1. DD-MM-YYYY or DD/MM/YYYY with optional time
+  const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*(AM|PM))?)?/i);
+  if (dmyMatch) {
+    const day = Number(dmyMatch[1]);
+    const month = Number(dmyMatch[2]) - 1;
+    const year = Number(dmyMatch[3]);
+    let hours = Number(dmyMatch[4] || 0);
+    const minutes = Number(dmyMatch[5] || 0);
+    const seconds = Number(dmyMatch[6] || 0);
+    const meridiem = dmyMatch[7]?.toUpperCase();
+
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+
+    const d = new Date(year, month, day, hours, minutes, seconds);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // 2. YYYY-MM-DD or YYYY/MM/DD with optional time
+  const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*(AM|PM))?)?/i);
+  if (ymdMatch) {
+    const year = Number(ymdMatch[1]);
+    const month = Number(ymdMatch[2]) - 1;
+    const day = Number(ymdMatch[3]);
+    let hours = Number(ymdMatch[4] || 0);
+    const minutes = Number(ymdMatch[5] || 0);
+    const seconds = Number(ymdMatch[6] || 0);
+    const meridiem = ymdMatch[7]?.toUpperCase();
+
+    if (meridiem === 'PM' && hours < 12) hours += 12;
+    if (meridiem === 'AM' && hours === 12) hours = 0;
+
+    const d = new Date(year, month, day, hours, minutes, seconds);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Fallback
+  const cleanIso = str.replace('T', ' ');
+  const parsed = new Date(cleanIso);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/**
+ * Format any date value into clean "DD-MM-YYYY hh:mm AM/PM"
+ */
+export function formatToDDMMYYYYHHMM(val: any): string {
+  if (!val) return '-';
+  const d = parseUniversalDate(val);
+  if (!d) return String(val).replace('T', ' ');
+
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const period = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  const hrStr = String(hours).padStart(2, '0');
+
+  return `${day}-${month}-${year} ${hrStr}:${minutes} ${period}`;
+}
+
+/**
  * Helper to convert DD-MM-YYYY to YYYY-MM-DD for HTML <input type="date">
  */
 export function convertDDMMYYYYToInputDate(ddmmyyyy: string): string {

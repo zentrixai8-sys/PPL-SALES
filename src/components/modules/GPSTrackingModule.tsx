@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { GPSExcelRecord } from '../../types';
 import { saveGPSExcelRowsToSheet } from '../../services/api';
-import { getIndianDateString } from '../../utils/dateUtils';
+import { getIndianDateString, parseUniversalDate, formatToDDMMYYYYHHMM } from '../../utils/dateUtils';
 import {
   Navigation,
   MapPin,
@@ -28,62 +28,12 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
 
-// Convert 24-hour time to 12-hour format with AM/PM (e.g. 20:06 -> 08:06 PM)
-const to12Hour = (h: number, m: number): string => {
-  const period = h >= 12 ? 'PM' : 'AM';
-  let hr = h % 12;
-  if (hr === 0) hr = 12;
-  return `${String(hr).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
-};
-
 const formatExcelDate = (val: any): string => {
-  if (!val) return '-';
-  const num = Number(val);
-  if (!isNaN(num) && num > 30000 && num < 60000) {
-    const jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
-    if (!isNaN(jsDate.getTime())) {
-      const day = String(jsDate.getDate()).padStart(2, '0');
-      const month = String(jsDate.getMonth() + 1).padStart(2, '0');
-      const year = jsDate.getFullYear();
-      return `${day}-${month}-${year} ${to12Hour(jsDate.getHours(), jsDate.getMinutes())}`;
-    }
-  }
-
-  // String case (e.g. "27-07-2026 20:06"): convert any 24-hour time to 12-hour AM/PM.
-  const str = String(val).trim();
-  const timeMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
-  if (timeMatch && !/\b(am|pm)\b/i.test(str)) {
-    const h = Number(timeMatch[1]);
-    const m = Number(timeMatch[2]);
-    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
-      const datePart = str.slice(0, timeMatch.index).trim();
-      const converted = to12Hour(h, m);
-      return datePart ? `${datePart} ${converted}` : converted;
-    }
-  }
-
-  return str;
+  return formatToDDMMYYYYHHMM(val);
 };
 
-// Parse an Excel serial number or a "DD-MM-YYYY[ HH:mm]" string into a Date
-// (callers that only need the date truncate the time portion themselves)
 const parseResultDateToDate = (val: any): Date | null => {
-  if (!val) return null;
-  const num = Number(val);
-  if (!isNaN(num) && num > 30000 && num < 60000) {
-    const jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
-    return isNaN(jsDate.getTime()) ? null : jsDate;
-  }
-
-  const str = String(val).trim();
-  const m = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[ T](\d{1,2}):(\d{2}))?/);
-  if (m) {
-    const jsDate = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4] || 0), Number(m[5] || 0));
-    return isNaN(jsDate.getTime()) ? null : jsDate;
-  }
-
-  const parsed = new Date(str);
-  return isNaN(parsed.getTime()) ? null : parsed;
+  return parseUniversalDate(val);
 };
 
 export const GPSTrackingModule: React.FC = () => {
@@ -411,10 +361,19 @@ export const GPSTrackingModule: React.FC = () => {
     setDateTo('');
   };
 
+  // Sort Excel records in Ascending order by Date & Time (earliest to latest)
+  const sortedExcelRecords = React.useMemo(() => {
+    return [...filteredExcelRecords].sort((a, b) => {
+      const da = parseResultDateToDate(a.resultDate)?.getTime() ?? 0;
+      const db = parseResultDateToDate(b.resultDate)?.getTime() ?? 0;
+      return da - db;
+    });
+  }, [filteredExcelRecords]);
+
   // Chronological movement path for the selected mobile number (drives the "View Route on Map" card)
   const MAX_ROUTE_STOPS = 23; // Google Maps directions URL supports up to ~25 waypoints
   const routeRecords = mobileFilter
-    ? [...filteredExcelRecords]
+    ? [...sortedExcelRecords]
         .filter(r => {
           const lat = Number(r.latitude);
           const lng = Number(r.longitude);
@@ -423,7 +382,7 @@ export const GPSTrackingModule: React.FC = () => {
         .sort((a, b) => {
           const da = parseResultDateToDate(a.resultDate)?.getTime() ?? 0;
           const db = parseResultDateToDate(b.resultDate)?.getTime() ?? 0;
-          return da - db;
+          return da - db; // ASCENDING: Earlier points first
         })
         .filter((r, i, arr) => {
           if (i === 0) return true;
@@ -474,7 +433,7 @@ export const GPSTrackingModule: React.FC = () => {
           <button
             onClick={handleRefreshData}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-950/80 hover:bg-sky-900 border border-sky-800 text-sky-600 font-bold text-xs transition-all disabled:opacity-60 cursor-pointer shadow-md"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/90 dark:bg-sky-950/80 hover:bg-slate-100 dark:hover:bg-sky-900 border border-slate-200 dark:border-sky-800 text-sky-700 dark:text-sky-300 font-bold text-xs transition-all disabled:opacity-60 cursor-pointer shadow-xs"
             title="Refresh latest GPS data"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-sky-600 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -483,7 +442,7 @@ export const GPSTrackingModule: React.FC = () => {
 
           <button
             onClick={handleDownloadSample}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-semibold text-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-all cursor-pointer shadow-xs"
             title="Download sample Excel format"
           >
             <Download className="w-3.5 h-3.5 text-sky-600" />
@@ -492,7 +451,7 @@ export const GPSTrackingModule: React.FC = () => {
 
           <button
             onClick={handleTriggerFileInput}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/25 transition-all cursor-pointer"
           >
             <Upload className="w-4 h-4" />
             <span>Upload GPS Excel File</span>
@@ -501,10 +460,10 @@ export const GPSTrackingModule: React.FC = () => {
           {gpsExcelRecords.length > 0 && (
             <button
               onClick={handleClearData}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-md ${
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-xs ${
                 isConfirmingClear
                   ? 'bg-rose-600 hover:bg-rose-500 border-rose-500 text-white animate-pulse'
-                  : 'bg-rose-950/80 hover:bg-rose-900 border-rose-800 text-rose-300'
+                  : 'bg-rose-50 dark:bg-rose-950/80 hover:bg-rose-100 dark:hover:bg-rose-900 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
               }`}
               title="Clear all Excel uploaded GPS records"
             >
@@ -517,29 +476,29 @@ export const GPSTrackingModule: React.FC = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+      <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-2">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setActiveTab('excel')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
               activeTab === 'excel'
-                ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 shadow-md'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-xs'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Excel Uploaded GPS Records ({gpsExcelRecords.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('live')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
               activeTab === 'live'
-                ? 'bg-sky-950/80 text-sky-600 border border-sky-800/80 shadow-md'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800 shadow-xs'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <Route className="w-4 h-4 text-sky-600" />
+            <Route className="w-4 h-4 text-sky-600 dark:text-sky-400" />
             <span>Road Map</span>
           </button>
         </div>
@@ -549,15 +508,15 @@ export const GPSTrackingModule: React.FC = () => {
       {activeTab === 'excel' && (
         <div className="space-y-4">
           {/* Unified Search & Filters Panel */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-center gap-3">
               <div className="flex items-center gap-2 shrink-0">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <Filter className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Filters</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Filters</span>
                 {hasActiveGpsFilters && (
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold border border-emerald-200 dark:border-emerald-500/30">
                     Active
                   </span>
                 )}
@@ -571,14 +530,14 @@ export const GPSTrackingModule: React.FC = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search records..."
-                  className="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full pl-8 pr-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-[11px] text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
               {hasActiveGpsFilters && (
                 <button
                   onClick={clearGpsFilters}
-                  className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-400 hover:text-rose-300 transition-colors cursor-pointer lg:ml-auto shrink-0"
+                  className="flex items-center gap-1.5 text-[11px] font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer lg:ml-auto shrink-0"
                 >
                   <XCircle className="w-3.5 h-3.5" />
                   <span>Clear All</span>
@@ -597,7 +556,7 @@ export const GPSTrackingModule: React.FC = () => {
                   <select
                     value={mobileFilter}
                     onChange={(e) => setMobileFilter(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer transition-colors"
+                    className="w-full pl-9 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer transition-colors"
                   >
                     <option value="">All Mobile Numbers</option>
                     {mobileNumberOptions.map(num => (
@@ -614,13 +573,13 @@ export const GPSTrackingModule: React.FC = () => {
                   From Date
                 </label>
                 <div className="relative">
-                  <Calendar className="w-4 h-4 text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="date"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
                     style={{ colorScheme: themeMode === 'dark' ? 'dark' : 'light' }}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               </div>
@@ -631,13 +590,13 @@ export const GPSTrackingModule: React.FC = () => {
                   To Date
                 </label>
                 <div className="relative">
-                  <Calendar className="w-4 h-4 text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="date"
                     value={dateTo}
                     onChange={(e) => setDateTo(e.target.value)}
                     style={{ colorScheme: themeMode === 'dark' ? 'dark' : 'light' }}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
               </div>
@@ -646,19 +605,19 @@ export const GPSTrackingModule: React.FC = () => {
 
           {/* Movement Route Card — appears when a Mobile Number is selected */}
           {mobileFilter && routeRecords.length > 0 && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-sky-950/60 via-slate-900 to-emerald-950/40 border border-sky-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-600 shrink-0">
                   <Route className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-white">Movement Route — {mobileFilter}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5 truncate">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Movement Route — {mobileFilter}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                     {routeRecords.length} location ping{routeRecords.length > 1 ? 's' : ''}
                     {routeRecords.length > 1 && (
                       <>
                         {' · From '}
-                        <span className="text-emerald-400 font-medium">{routeRecords[0].address || 'Start Point'}</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">{routeRecords[0].address || 'Start Point'}</span>
                         {' to '}
                         <span className="text-sky-600 font-medium">{routeRecords[routeRecords.length - 1].address || 'End Point'}</span>
                       </>
@@ -670,7 +629,7 @@ export const GPSTrackingModule: React.FC = () => {
                 href={routeMapsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-600 hover:from-sky-400 hover:to-emerald-500 text-slate-950 font-bold text-xs shadow-lg shadow-sky-500/20 transition-all shrink-0 cursor-pointer"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-sky-500/20 transition-all shrink-0 cursor-pointer"
               >
                 <MapPin className="w-4 h-4" />
                 <span>View Route on Map</span>
@@ -679,26 +638,26 @@ export const GPSTrackingModule: React.FC = () => {
             </div>
           )}
 
-          {filteredExcelRecords.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl bg-slate-900/50 border border-slate-800 space-y-3">
-              <FileSpreadsheet className="w-10 h-10 text-slate-600 mx-auto" />
-              <p className="text-slate-300 font-medium text-sm">No Excel GPS Records Found</p>
+          {sortedExcelRecords.length === 0 ? (
+            <div className="p-12 text-center rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+              <FileSpreadsheet className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto" />
+              <p className="text-slate-800 dark:text-slate-300 font-bold text-sm">No Excel GPS Records Found</p>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Click <strong className="text-emerald-400 font-semibold">'Upload GPS Excel File'</strong> above to select and upload your spreadsheet into the system.
+                Click <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">'Upload GPS Excel File'</strong> above to select and upload your spreadsheet into the system.
               </p>
               <button
                 onClick={handleTriggerFileInput}
-                className="mt-2 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-bold text-xs cursor-pointer shadow-lg shadow-emerald-500/20"
+                className="mt-2 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs cursor-pointer shadow-lg shadow-emerald-600/20"
               >
                 <Upload className="w-4 h-4" />
                 <span>Upload Excel File</span>
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900 shadow-xl custom-scrollbar">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs custom-scrollbar">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider font-semibold border-b border-slate-800">
+                  <tr className="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 uppercase text-[10px] tracking-wider font-bold border-b border-slate-200 dark:border-slate-800">
                     <th className="p-3.5 text-center">#</th>
                     <th className="p-3.5 min-w-[130px]">Transporter</th>
                     <th className="p-3.5 min-w-[150px]">Recipient Customer</th>
@@ -716,36 +675,36 @@ export const GPSTrackingModule: React.FC = () => {
                     <th className="p-3.5 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                  {filteredExcelRecords.map((item, idx) => {
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                  {sortedExcelRecords.map((item, idx) => {
                     const mapsUrl = item.latitude && item.longitude
                       ? `https://maps.google.com/?q=${item.latitude},${item.longitude}`
                       : null;
 
                     return (
-                      <tr key={`excel-tr-${item.id || idx}`} className="hover:bg-slate-800/50 transition-colors">
-                        <td className="p-3 text-center font-mono text-slate-500">{idx + 1}</td>
-                        <td className="p-3 font-medium text-slate-200">{item.transporterName || '-'}</td>
-                        <td className="p-3 text-slate-300">{item.recipientCustomerName || '-'}</td>
-                        <td className="p-3 font-bold text-amber-400 whitespace-nowrap">{item.vehicleNumber || '-'}</td>
-                        <td className="p-3 text-slate-300">{item.resourceName || '-'}</td>
+                      <tr key={`excel-tr-${item.id || idx}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="p-3 text-center font-mono text-slate-400 dark:text-slate-500">{idx + 1}</td>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{item.transporterName || '-'}</td>
+                        <td className="p-3 text-slate-700 dark:text-slate-300">{item.recipientCustomerName || '-'}</td>
+                        <td className="p-3 font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{item.vehicleNumber || '-'}</td>
+                        <td className="p-3 text-slate-700 dark:text-slate-300">{item.resourceName || '-'}</td>
                         <td className="p-3 font-mono text-sky-600 whitespace-nowrap">{item.deviceNumber || '-'}</td>
-                        <td className="p-3 text-slate-300 whitespace-nowrap">{formatExcelDate(item.resultDate)}</td>
-                        <td className="p-3 text-slate-300 max-w-[220px] truncate" title={item.address}>{item.address || '-'}</td>
-                        <td className="p-3 font-mono text-emerald-400 whitespace-nowrap">{item.latitude || '-'}</td>
+                        <td className="p-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{formatExcelDate(item.resultDate)}</td>
+                        <td className="p-3 text-slate-700 dark:text-slate-300 max-w-[220px] truncate" title={item.address}>{item.address || '-'}</td>
+                        <td className="p-3 font-mono text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{item.latitude || '-'}</td>
                         <td className="p-3 font-mono text-sky-600 whitespace-nowrap">{item.longitude || '-'}</td>
-                        <td className="p-3 text-slate-300 whitespace-nowrap">{item.accuracy || '-'}</td>
-                        <td className="p-3 text-slate-300 whitespace-nowrap">{item.distance || '-'}</td>
+                        <td className="p-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">{item.accuracy || '-'}</td>
+                        <td className="p-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">{item.distance || '-'}</td>
                         <td className="p-3 font-semibold whitespace-nowrap">
                           {item.status ? (
-                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 text-[11px]">
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold">
                               {item.status}
                             </span>
                           ) : (
-                            <span className="text-slate-600">-</span>
+                            <span className="text-slate-400">-</span>
                           )}
                         </td>
-                        <td className="p-3 text-slate-300 whitespace-nowrap">{item.type || '-'}</td>
+                        <td className="p-3 text-slate-600 dark:text-slate-300 whitespace-nowrap">{item.type || '-'}</td>
                         <td className="p-3 text-center whitespace-nowrap">
                           {mapsUrl ? (
                             <a

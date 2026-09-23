@@ -15,9 +15,10 @@ import { GPSTrackingModule } from '../modules/GPSTrackingModule';
 import { CustomersModule } from '../modules/CustomersModule';
 import { ReportsModule } from '../modules/ReportsModule';
 import { AnalyticsModule } from '../modules/AnalyticsModule';
-import { UserProfileModule } from '../modules/UserProfileModule';
 import { SettingsModule } from '../modules/SettingsModule';
+import { UserProfileModule } from '../modules/UserProfileModule';
 import { ReferencesModule } from '../modules/ReferencesModule';
+import { UserManagementModule } from '../modules/UserManagementModule';
 import { SalesAutoTracker } from './SalesAutoTracker';
 import { RefreshCw, ArrowDown } from 'lucide-react';
 
@@ -31,6 +32,7 @@ export type NavigationTab =
   | 'references'
   | 'reports'
   | 'analytics'
+  | 'users'
   | 'settings'
   | 'profile';
 
@@ -152,6 +154,8 @@ export const DashboardContainer: React.FC = () => {
         return <UserProfileModule />;
       case 'references':
         return <ReferencesModule />;
+      case 'users':
+        return <UserManagementModule />;
       default:
         return role === 'Admin' ? (
           <AdminDashboard onNavigate={setCurrentTab} />

@@ -30,6 +30,7 @@ import {
   Plane
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface CompanyVisitEntry {
   id: string;
@@ -515,9 +516,7 @@ export const MorningPlanModule: React.FC = () => {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center font-bold text-amber-600 dark:text-amber-400 group-hover:scale-105 transition-transform">
-                      {group.salesPersonName.charAt(0).toUpperCase()}
-                    </div>
+                    <UserAvatar name={group.salesPersonName} size="md" showRankBadge={false} />
                     <div>
                       <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                         {group.salesPersonName}
@@ -927,9 +926,7 @@ export const MorningPlanModule: React.FC = () => {
             >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-lg shrink-0">
-                    {selectedGroupDetails.salesPersonName.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar name={selectedGroupDetails.salesPersonName} size="lg" showRankBadge={false} />
                   <div>
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <span>{selectedGroupDetails.salesPersonName}</span>

@@ -9,21 +9,22 @@ import {
   Navigation,
   FileSpreadsheet,
   BarChart3,
+  Users,
   Settings,
   LogOut,
   X,
-  ShieldCheck,
-  UserPlus,
   ChevronLeft,
   ChevronRight,
+  UserPlus,
+  Shield,
+  Briefcase,
   Sparkles,
-  Radio,
-  User,
-  Zap,
-  Code2
+  Code2,
+  CheckCircle2,
+  Layers,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 interface SidebarProps {
   currentTab: NavigationTab;
@@ -32,6 +33,18 @@ interface SidebarProps {
   closeMobile: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+}
+
+interface NavGroup {
+  title?: string;
+  items: {
+    id: NavigationTab;
+    label: string;
+    icon: React.ElementType;
+    badge?: string;
+    adminOnly?: boolean;
+    color?: string;
+  }[];
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -44,33 +57,60 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { authState, logout, themeMode, toggleTheme } = useAuth();
   const user = authState.user;
+  const isAdmin = user?.role === 'Admin';
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'target', label: 'Target Assignment', icon: Target },
-    { id: 'morning_plan', label: 'Morning Follow up', icon: Sun },
-    { id: 'evening_report', label: 'Evening Report', icon: Moon },
-    { id: 'gps_tracking', label: 'GPS Tracking', icon: Navigation },
-    { id: 'references', label: 'References / Leads', icon: UserPlus },
-    { id: 'reports', label: 'Reports & Logs', icon: FileSpreadsheet },
-    { id: 'analytics', label: 'Performance Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'System Settings', icon: Settings },
-  ] as const;
+  const navGroups: NavGroup[] = [
+    {
+      title: 'CORE & TARGETS',
+      items: [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'from-blue-500 to-indigo-600' },
+        { id: 'target', label: 'Target Assignment', icon: Target, color: 'from-purple-500 to-indigo-600' },
+      ],
+    },
+    {
+      title: 'DAILY WORKFLOW',
+      items: [
+        { id: 'morning_plan', label: 'Morning Follow up', icon: Sun, color: 'from-amber-500 to-orange-500' },
+        { id: 'evening_report', label: 'Evening Report', icon: Moon, color: 'from-indigo-500 to-sky-500' },
+        { id: 'gps_tracking', label: 'GPS Tracking', icon: Navigation, color: 'from-emerald-500 to-teal-500' },
+      ],
+    },
+    {
+      title: 'SALES & CRM',
+      items: [
+        { id: 'references', label: 'References / Leads', icon: UserPlus, color: 'from-pink-500 to-rose-500' },
+        { id: 'reports', label: 'Reports & Logs', icon: FileSpreadsheet, color: 'from-cyan-500 to-blue-500' },
+        { id: 'analytics', label: 'Performance Analytics', icon: BarChart3, color: 'from-violet-500 to-purple-600' },
+      ],
+    },
+    {
+      title: 'ADMINISTRATION',
+      items: [
+        ...(isAdmin
+          ? [{ id: 'users' as NavigationTab, label: 'User Management', icon: Users, badge: 'New', color: 'from-blue-600 to-indigo-600' }]
+          : []),
+        { id: 'settings', label: 'System Settings', icon: Settings, color: 'from-slate-500 to-slate-700' },
+      ],
+    },
+  ];
 
   const sidebarContent = (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200/90 dark:border-slate-800/90 text-slate-800 dark:text-slate-200 transition-all duration-300 relative select-none shadow-sm dark:shadow-2xl">
-      {/* Top Ambient Glow */}
-      <div className="pointer-events-none absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-indigo-500/5 dark:from-indigo-500/10 to-transparent blur-xl" />
+    <div className="h-full flex flex-col bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 transition-all duration-300 relative select-none shadow-sm">
+      {/* Subtle Top Ambient Gradient */}
+      <div className="pointer-events-none absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-blue-500/5 via-indigo-500/5 to-transparent blur-xl" />
 
-      {/* Brand & Logo Header */}
-      <div className={`p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center relative z-10 ${isCollapsed ? 'justify-center flex-col gap-2' : 'justify-between'}`}>
+      {/* Header with Logo and Collapse Toggle */}
+      <div
+        className={`p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center relative z-10 transition-all ${
+          isCollapsed ? 'justify-center flex-col gap-2' : 'justify-between'
+        }`}
+      >
         {!isCollapsed ? (
           <>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <BrandLogo size="md" />
             </div>
             <div className="flex items-center gap-1">
-              {/* Desktop Collapse Button */}
               <button
                 type="button"
                 onClick={onToggleCollapse}
@@ -79,8 +119,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-
-              {/* Mobile Close Button */}
               <button
                 type="button"
                 onClick={closeMobile}
@@ -105,117 +143,148 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* User Executive Profile Card */}
-      <div className={`border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-950/40 relative z-10 ${isCollapsed ? 'p-2.5 flex justify-center' : 'p-3.5'}`}>
+      {/* Executive Profile Card */}
+      <div
+        className={`border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/40 relative z-10 transition-all ${
+          isCollapsed ? 'p-2.5 flex justify-center' : 'p-3.5'
+        }`}
+      >
         {!isCollapsed ? (
-          <div className="p-2.5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-sky-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">
-                {user?.userName ? user.userName.substring(0, 2).toUpperCase() : 'PP'}
+          <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
+            <div className="relative shrink-0">
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-md shadow-blue-500/20 border border-slate-200 dark:border-slate-700">
+                {user?.profileUrl ? (
+                  <img src={user.profileUrl} alt={user.userName} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{user?.userName ? user.userName.substring(0, 2).toUpperCase() : 'PP'}</span>
+                )}
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 shadow-xs" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              </span>
             </div>
+
             <div className="min-w-0 flex-1">
-              <div className="font-bold text-xs text-slate-900 dark:text-white truncate">
-                {user?.userName || 'Executive User'}
+              <div className="font-bold text-xs text-slate-900 dark:text-white truncate flex items-center gap-1">
+                <span className="truncate">{user?.userName || 'Executive User'}</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
-                  {user?.role === 'Admin' ? 'Administrator' : 'Sales Rep'}
+              <div className="flex items-center gap-1.5 mt-1">
+                <span
+                  className={`inline-flex items-center gap-0.5 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                    isAdmin
+                      ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800'
+                      : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800'
+                  }`}
+                >
+                  {isAdmin ? <Shield className="w-2.5 h-2.5" /> : <Briefcase className="w-2.5 h-2.5" />}
+                  <span>{user?.role || 'Staff'}</span>
                 </span>
-                <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-slate-100 dark:bg-slate-800 font-mono text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate">
                   {user?.id}
                 </span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="relative group cursor-pointer" title={`${user?.userName} (${user?.role})`}>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-sky-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">
-              {user?.userName ? user.userName.substring(0, 2).toUpperCase() : 'PP'}
+          <div className="relative group cursor-pointer" title={`${user?.userName} (${user?.role} - ${user?.id})`}>
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-sm border border-slate-200 dark:border-slate-700">
+              {user?.profileUrl ? (
+                <img src={user.profileUrl} alt={user.userName} className="w-full h-full object-cover" />
+              ) : (
+                <span>{user?.userName ? user.userName.substring(0, 2).toUpperCase() : 'PP'}</span>
+              )}
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
           </div>
         )}
       </div>
 
-      {/* Navigation Links */}
-      <nav className={`flex-1 overflow-y-auto space-y-1.5 custom-scrollbar relative z-10 ${isCollapsed ? 'p-2' : 'p-3'}`}>
-        {!isCollapsed && (
-          <div className="px-2 pb-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            Navigation Menu
-          </div>
-        )}
-
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentTab === item.id;
+      {/* Categorized Navigation Menu */}
+      <nav className={`flex-1 overflow-y-auto space-y-4 slim-scrollbar relative z-10 ${isCollapsed ? 'p-2' : 'p-3'}`}>
+        {navGroups.map((group, groupIdx) => {
+          if (group.items.length === 0) return null;
 
           return (
-            <motion.button
-              key={item.id}
-              whileHover={{ x: isCollapsed ? 0 : 3, scale: 1.01 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                onTabChange(item.id as NavigationTab);
-                closeMobile();
-              }}
-              title={isCollapsed ? item.label : undefined}
-              className={`w-full flex items-center rounded-2xl text-xs transition-all relative cursor-pointer group ${
-                isCollapsed
-                  ? 'justify-center p-3'
-                  : 'gap-3 px-3.5 py-2.5'
-              } ${
-                isActive
-                  ? 'text-slate-950 dark:text-white font-bold'
-                  : 'text-slate-700 dark:text-slate-300 font-semibold hover:text-slate-950 dark:hover:text-white'
-              }`}
-            >
-              {/* Sliding Active Pill Background with Spring Physics */}
-              {isActive && (
-                <motion.div
-                  layoutId="sidebarActivePill"
-                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                  className="absolute inset-0 rounded-2xl bg-sky-100/90 dark:bg-slate-800 border border-sky-300/80 dark:border-slate-700 shadow-xs"
-                />
+            <div key={groupIdx} className="space-y-1">
+              {!isCollapsed && group.title && (
+                <div className="px-3 pt-1 pb-1.5 text-[10px] font-black tracking-wider uppercase text-slate-400 dark:text-slate-500">
+                  {group.title}
+                </div>
               )}
 
-              {/* Left Accent Bar for Active Tab */}
-              {isActive && (
-                <motion.div
-                  layoutId="sidebarActiveBar"
-                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                  className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full bg-sky-600 dark:bg-sky-400"
-                />
-              )}
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = currentTab === item.id;
 
-              {/* Icon Container */}
-              <div className={`relative z-10 p-1.5 rounded-xl transition-all ${
-                isActive
-                  ? 'bg-sky-600 dark:bg-sky-500/20 text-white dark:text-sky-300 shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white group-hover:bg-slate-200/60 dark:group-hover:bg-slate-800'
-              }`}>
-                <Icon className="w-4 h-4 shrink-0" />
-              </div>
+                return (
+                  <motion.button
+                    key={item.id}
+                    whileHover={{ x: isCollapsed ? 0 : 2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      onTabChange(item.id);
+                      closeMobile();
+                    }}
+                    title={isCollapsed ? item.label : undefined}
+                    className={`w-full flex items-center rounded-2xl text-xs transition-all relative cursor-pointer group ${
+                      isCollapsed ? 'justify-center p-2.5 my-1' : 'gap-3 px-3 py-2.5 my-0.5'
+                    } ${
+                      isActive
+                        ? 'bg-blue-50/90 dark:bg-blue-950/40 text-blue-900 dark:text-white font-extrabold border border-blue-200/80 dark:border-blue-800/80 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white border border-transparent'
+                    }`}
+                  >
+                    {/* Active Accent Bar */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="sidebarActiveIndicator"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                        className="absolute left-0 top-2 bottom-2 w-1.5 rounded-r-full bg-blue-600 dark:bg-blue-400 shadow-sm shadow-blue-500"
+                      />
+                    )}
 
-              {/* Label */}
-              {!isCollapsed && (
-                <span className="relative z-10 truncate flex-1 tracking-tight">
-                  {item.label}
-                </span>
-              )}
-            </motion.button>
+                    {/* Icon with Subtle Background Glow on Active */}
+                    <div
+                      className={`relative z-10 p-1.5 rounded-xl transition-all shrink-0 ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                          : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white group-hover:bg-slate-200/60 dark:group-hover:bg-slate-700/60'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+
+                    {/* Label & Optional Badge */}
+                    {!isCollapsed && (
+                      <div className="relative z-10 truncate flex-1 flex items-center justify-between text-left">
+                        <span className="truncate tracking-tight">{item.label}</span>
+                        {item.badge && (
+                          <span className="ml-1.5 px-1.5 py-0.5 text-[9px] font-black uppercase rounded-full bg-blue-600 text-white shadow-xs">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
           );
         })}
       </nav>
 
-      {/* Footer Controls: Theme Toggle & Logout */}
-      <div className={`border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/40 space-y-2 relative z-10 ${isCollapsed ? 'p-2' : 'p-3'}`}>
+      {/* Footer Controls */}
+      <div
+        className={`border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-950/40 space-y-2 relative z-10 transition-all ${
+          isCollapsed ? 'p-2' : 'p-3'
+        }`}
+      >
         {/* Theme Toggle Button */}
         <button
+          type="button"
           onClick={toggleTheme}
           title={themeMode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          className={`w-full flex items-center rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer shadow-xs ${
+          className={`w-full flex items-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer shadow-2xs ${
             isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2'
           }`}
         >
@@ -225,7 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             ) : (
               <Moon className="w-4 h-4 text-indigo-500 shrink-0" />
             )}
-            {!isCollapsed && <span>{themeMode === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>}
+            {!isCollapsed && <span>{themeMode === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
           </div>
           {!isCollapsed && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-mono text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
@@ -236,9 +305,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Logout Button */}
         <button
+          type="button"
           onClick={logout}
           title="Logout"
-          className={`w-full flex items-center rounded-xl bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all group cursor-pointer shadow-xs ${
+          className={`w-full flex items-center rounded-2xl bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-900 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all group cursor-pointer shadow-2xs ${
             isCollapsed ? 'justify-center p-2.5' : 'justify-center gap-2 px-3 py-2'
           }`}
         >
@@ -246,9 +316,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && <span>Sign Out</span>}
         </button>
 
-        {/* Developer Branding Footer */}
+        {/* Developer Branding Signature */}
         <div className="pt-1 text-[9px] text-center text-slate-400 dark:text-slate-500 font-mono tracking-wider font-semibold truncate flex items-center justify-center gap-1">
-          <Code2 className="w-3 h-3 text-indigo-500 shrink-0" />
+          <Code2 className="w-3 h-3 text-blue-500 shrink-0" />
           <span>{isCollapsed ? 'DS' : 'DEVELOPED BY DEEPAK SAHU'}</span>
         </div>
       </div>
@@ -258,7 +328,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className={`hidden lg:block h-screen sticky top-0 shrink-0 z-20 transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      <aside
+        className={`hidden lg:block h-screen sticky top-0 shrink-0 z-20 transition-all duration-300 ease-in-out ${
+          isCollapsed ? 'w-20' : 'w-64'
+        }`}
+      >
         {sidebarContent}
       </aside>
 
@@ -266,7 +340,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isOpenMobile && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
             onClick={closeMobile}
           />
           <div className="relative w-72 max-w-[85vw] h-full z-10 animate-in slide-in-from-left duration-300 shadow-2xl">
@@ -277,3 +351,4 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+

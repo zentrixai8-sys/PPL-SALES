@@ -247,8 +247,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         {/* Live Status Badge / Date & Notice Trigger */}
         <div className="relative flex flex-wrap items-center gap-2 self-start sm:self-auto">
           <button
+            onClick={() => onNavigate('users')}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+            title="Create & manage employee accounts"
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Manage Users</span>
+          </button>
+
+          <button
             onClick={() => onNavigate('settings')}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer active:scale-95"
             title="Broadcast Announcement to all reps"
           >
             <Megaphone className="w-3.5 h-3.5" />

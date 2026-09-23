@@ -1,24 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { fetchAllUsersFromSheet } from '../../services/api';
 
 export const KNOWN_AVATARS: Record<string, string> = {
-  'ADMIN': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80',
+  // Main Team & Demo Accounts
+  'Administrator': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+  'ADMIN01': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+  'ADMIN': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
+
+  'Deepak Sahu': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+  'EMP101': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+
+  'Amit Verma': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+  'EMP102': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+
+  'Neha Garg': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
+  'EMP103': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
+
+  'Pradeep Kumar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+  'EMP104': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+
+  'Jaspreet Singh': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+  'EMP105': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+
+  // Additional Team Members
   'Devi Naidu': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
-  'Pradeep Kumar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
   'Pamendra Singh Rajput': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
   'Vivek Yadav': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
   'Alankriti Singh': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=250&q=80',
 };
 
-export const getRepAvatarUrl = (name: string, currentUser?: any): string => {
-  if (!name) return `https://ui-avatars.com/api/?name=User&background=23328b&color=ffffff&bold=true&rounded=true&size=128`;
-  if (currentUser && currentUser.userName && currentUser.userName.toLowerCase() === name.toLowerCase() && currentUser.profileUrl) {
-    return currentUser.profileUrl;
+// Global in-memory cache for dynamically registered user profile pictures from Supabase
+const dynamicUserAvatarCache: Record<string, string> = {};
+
+export const registerDynamicUserAvatar = (userIdOrName: string, profileUrl: string) => {
+  if (!userIdOrName || !profileUrl) return;
+  dynamicUserAvatarCache[userIdOrName.trim().toLowerCase()] = profileUrl;
+};
+
+export const getRepAvatarUrl = (nameOrId: string, currentUser?: any): string => {
+  if (!nameOrId) {
+    return 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80';
   }
-  if (KNOWN_AVATARS[name]) {
-    return KNOWN_AVATARS[name];
+
+  const cleanKey = nameOrId.trim();
+  const lowerKey = cleanKey.toLowerCase();
+
+  // 1. Current logged-in user match
+  if (currentUser) {
+    if (
+      (currentUser.userName && currentUser.userName.toLowerCase() === lowerKey) ||
+      (currentUser.id && currentUser.id.toLowerCase() === lowerKey)
+    ) {
+      if (currentUser.profileUrl) return currentUser.profileUrl;
+    }
   }
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=23328b&color=ffffff&bold=true&rounded=true&size=128`;
+
+  // 2. Dynamic cache from Supabase
+  if (dynamicUserAvatarCache[lowerKey]) {
+    return dynamicUserAvatarCache[lowerKey];
+  }
+
+  // 3. Known avatars mapping
+  for (const [key, url] of Object.entries(KNOWN_AVATARS)) {
+    if (key.toLowerCase() === lowerKey) {
+      return url;
+    }
+  }
+
+  // 4. Default high quality fallback
+  return `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80`;
 };
 
 interface UserAvatarProps {
@@ -37,7 +88,29 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   className = '',
 }) => {
   const { authState } = useAuth();
-  const avatarUrl = getRepAvatarUrl(name, authState.user);
+  const [avatarUrl, setAvatarUrl] = useState<string>(() => getRepAvatarUrl(name, authState.user));
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    const url = getRepAvatarUrl(name, authState.user);
+    setAvatarUrl(url);
+    setImgError(false);
+
+    // Sync dynamic avatars from Supabase in the background if not cached yet
+    if (!dynamicUserAvatarCache[name.trim().toLowerCase()]) {
+      fetchAllUsersFromSheet().then((users) => {
+        users.forEach((u) => {
+          if (u.profileUrl) {
+            registerDynamicUserAvatar(u.userName, u.profileUrl);
+            registerDynamicUserAvatar(u.id, u.profileUrl);
+          }
+        });
+        const updatedUrl = getRepAvatarUrl(name, authState.user);
+        setAvatarUrl(updatedUrl);
+      }).catch(() => {});
+    }
+  }, [name, authState.user]);
+
   const initials = (name || 'U')
     .split(' ')
     .filter(Boolean)
@@ -65,15 +138,16 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   return (
     <div className={`relative shrink-0 select-none ${className}`}>
       <div className={`${sizeClasses} rounded-2xl overflow-hidden ring-2 ring-slate-200/80 dark:ring-slate-700/80 shadow-md bg-gradient-to-br from-indigo-500 to-sky-600 flex items-center justify-center text-white font-black`}>
-        <img
-          src={avatarUrl}
-          alt={name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
-        <span className="absolute z-0">{initials}</span>
+        {!imgError && avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={name}
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <span className="font-bold">{initials}</span>
+        )}
       </div>
 
       {showRankBadge && badgeInfo && (
@@ -84,3 +158,4 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
     </div>
   );
 };
+

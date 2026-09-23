@@ -26,7 +26,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   variant = 'full',
   size = 'md',
   className = '',
-  showTagline = true,
+  showTagline = false,
 }) => {
   const { themeMode } = useAuth();
 
@@ -65,14 +65,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
           className={`${imgHeight} w-auto max-w-[200px] object-contain drop-shadow-xs`}
         />
       </div>
-      {showTagline && (
-        <div className="flex items-center gap-2">
-          <BrandColorBar />
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wider uppercase font-mono">
-            Sales Portal
-          </span>
-        </div>
-      )}
     </div>
   );
 };
+

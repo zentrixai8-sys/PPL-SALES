@@ -104,6 +104,21 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
       badge: 'Account',
       badgeColor: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border-indigo-500/30'
     },
+    ...(user?.role === 'Admin'
+      ? [
+          {
+            id: 'users' as NavigationTab,
+            label: 'User Management',
+            desc: 'Create & manage employee IDs',
+            icon: Users,
+            gradient: 'from-blue-500/20 to-indigo-500/20',
+            iconColor: 'text-blue-600 dark:text-blue-400',
+            borderColor: 'border-blue-500/30',
+            badge: 'Admin',
+            badgeColor: 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30',
+          },
+        ]
+      : []),
     {
       id: 'settings' as NavigationTab,
       label: 'App Settings',
