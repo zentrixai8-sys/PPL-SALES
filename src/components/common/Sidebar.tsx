@@ -143,62 +143,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Executive Profile Card */}
-      <div
-        className={`border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/40 relative z-10 transition-all ${
-          isCollapsed ? 'p-2.5 flex justify-center' : 'p-3.5'
-        }`}
-      >
-        {!isCollapsed ? (
-          <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-3">
-            <div className="relative shrink-0">
-              <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-md shadow-blue-500/20 border border-slate-200 dark:border-slate-700">
-                {user?.profileUrl ? (
-                  <img src={user.profileUrl} alt={user.userName} className="w-full h-full object-cover" />
-                ) : (
-                  <span>{user?.userName ? user.userName.substring(0, 2).toUpperCase() : 'PP'}</span>
-                )}
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 flex items-center justify-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              </span>
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="font-bold text-xs text-slate-900 dark:text-white truncate flex items-center gap-1">
-                <span className="truncate">{user?.userName || 'Executive User'}</span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span
-                  className={`inline-flex items-center gap-0.5 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
-                    isAdmin
-                      ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800'
-                      : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800'
-                  }`}
-                >
-                  {isAdmin ? <Shield className="w-2.5 h-2.5" /> : <Briefcase className="w-2.5 h-2.5" />}
-                  <span>{user?.role || 'Staff'}</span>
-                </span>
-                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate">
-                  {user?.id}
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="relative group cursor-pointer" title={`${user?.userName} (${user?.role} - ${user?.id})`}>
-            <div className="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-sm border border-slate-200 dark:border-slate-700">
-              {user?.profileUrl ? (
-                <img src={user.profileUrl} alt={user.userName} className="w-full h-full object-cover" />
-              ) : (
-                <span>{user?.userName ? user.userName.substring(0, 2).toUpperCase() : 'PP'}</span>
-              )}
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900" />
-          </div>
-        )}
-      </div>
-
       {/* Categorized Navigation Menu */}
       <nav className={`flex-1 overflow-y-auto space-y-4 slim-scrollbar relative z-10 ${isCollapsed ? 'p-2' : 'p-3'}`}>
         {navGroups.map((group, groupIdx) => {

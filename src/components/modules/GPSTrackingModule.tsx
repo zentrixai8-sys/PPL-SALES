@@ -28,12 +28,30 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
 
-const formatExcelDate = (val: any): string => {
-  return formatToDDMMYYYYHHMM(val);
-};
+// Calculate distance in KM between two lat/lng coordinates using the Haversine formula
+export const calculateDistanceKm = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number => {
+  if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) return 0;
+  if (lat1 === 0 && lon1 === 0) return 0;
+  if (lat2 === 0 && lon2 === 0) return 0;
+  if (lat1 === lat2 && lon1 === lon2) return 0;
 
-const parseResultDateToDate = (val: any): Date | null => {
-  return parseUniversalDate(val);
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c;
+  return Number(d.toFixed(2));
 };
 
 export const GPSTrackingModule: React.FC = () => {
@@ -330,7 +348,7 @@ export const GPSTrackingModule: React.FC = () => {
 
     let matchesDateRange = true;
     if (dateFrom || dateTo) {
-      const recDate = parseResultDateToDate(r.resultDate);
+      const recDate = parseUniversalDate(r.resultDate);
       if (!recDate) {
         matchesDateRange = false;
       } else {
@@ -364,8 +382,8 @@ export const GPSTrackingModule: React.FC = () => {
   // Sort Excel records in Ascending order by Date & Time (earliest to latest)
   const sortedExcelRecords = React.useMemo(() => {
     return [...filteredExcelRecords].sort((a, b) => {
-      const da = parseResultDateToDate(a.resultDate)?.getTime() ?? 0;
-      const db = parseResultDateToDate(b.resultDate)?.getTime() ?? 0;
+      const da = parseUniversalDate(a.resultDate)?.getTime() ?? 0;
+      const db = parseUniversalDate(b.resultDate)?.getTime() ?? 0;
       return da - db;
     });
   }, [filteredExcelRecords]);
@@ -380,8 +398,8 @@ export const GPSTrackingModule: React.FC = () => {
           return r.latitude && r.longitude && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
         })
         .sort((a, b) => {
-          const da = parseResultDateToDate(a.resultDate)?.getTime() ?? 0;
-          const db = parseResultDateToDate(b.resultDate)?.getTime() ?? 0;
+          const da = parseUniversalDate(a.resultDate)?.getTime() ?? 0;
+          const db = parseUniversalDate(b.resultDate)?.getTime() ?? 0;
           return da - db; // ASCENDING: Earlier points first
         })
         .filter((r, i, arr) => {
@@ -394,6 +412,24 @@ export const GPSTrackingModule: React.FC = () => {
         })
         .slice(0, MAX_ROUTE_STOPS)
     : [];
+
+  // Calculate Total Traveled Distance in KM across all route waypoints
+  const totalTraveledKm = React.useMemo(() => {
+    if (!routeRecords || routeRecords.length < 2) return 0;
+    let total = 0;
+    for (let i = 0; i < routeRecords.length - 1; i++) {
+      const p1 = routeRecords[i];
+      const p2 = routeRecords[i + 1];
+      const dist = calculateDistanceKm(
+        Number(p1.latitude),
+        Number(p1.longitude),
+        Number(p2.latitude),
+        Number(p2.longitude)
+      );
+      total += dist;
+    }
+    return Number(total.toFixed(2));
+  }, [routeRecords]);
 
   const routeMapsUrl = routeRecords.length > 0
     ? `https://www.google.com/maps/dir/${routeRecords.map(r => `${r.latitude},${r.longitude}`).join('/')}`
@@ -611,7 +647,14 @@ export const GPSTrackingModule: React.FC = () => {
                   <Route className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Movement Route — {mobileFilter}</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Movement Route — {mobileFilter}</h3>
+                    {totalTraveledKm > 0 && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-extrabold text-[11px] border border-emerald-200 dark:border-emerald-800 shadow-2xs">
+                        🛣️ Total: {totalTraveledKm} KM
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
                     {routeRecords.length} location ping{routeRecords.length > 1 ? 's' : ''}
                     {routeRecords.length > 1 && (
@@ -689,7 +732,7 @@ export const GPSTrackingModule: React.FC = () => {
                         <td className="p-3 font-bold text-amber-600 dark:text-amber-400 whitespace-nowrap">{item.vehicleNumber || '-'}</td>
                         <td className="p-3 text-slate-700 dark:text-slate-300">{item.resourceName || '-'}</td>
                         <td className="p-3 font-mono text-sky-600 whitespace-nowrap">{item.deviceNumber || '-'}</td>
-                        <td className="p-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{formatExcelDate(item.resultDate)}</td>
+                        <td className="p-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{formatToDDMMYYYYHHMM(item.resultDate)}</td>
                         <td className="p-3 text-slate-700 dark:text-slate-300 max-w-[220px] truncate" title={item.address}>{item.address || '-'}</td>
                         <td className="p-3 font-mono text-emerald-600 dark:text-emerald-400 whitespace-nowrap">{item.latitude || '-'}</td>
                         <td className="p-3 font-mono text-sky-600 whitespace-nowrap">{item.longitude || '-'}</td>
@@ -777,10 +820,17 @@ export const GPSTrackingModule: React.FC = () => {
           {/* Render Route if available */}
           {mobileFilter && dateFrom && routeRecords.length > 0 ? (
             <div className="p-5 rounded-2xl bg-gradient-to-r from-sky-950/60 via-slate-900 to-emerald-950/40 border border-sky-800/40 space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Road Map Details</h3>
-                  <p className="text-xs text-slate-400">Showing {routeRecords.length} location points</p>
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h3 className="text-lg font-bold text-white">Road Map Details</h3>
+                    {totalTraveledKm > 0 && (
+                      <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-black shadow-xs">
+                        🛣️ Total Distance: {totalTraveledKm} KM
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Showing {routeRecords.length} location points</p>
                 </div>
                 <a
                   href={routeInteractiveMapsUrl}
@@ -800,6 +850,14 @@ export const GPSTrackingModule: React.FC = () => {
                     const isLast = i === routeRecords.length - 1;
                     const nextRoute = !isLast ? routeRecords[i+1] : null;
                     const segmentUrl = nextRoute ? `https://www.google.com/maps/dir/${r.latitude},${r.longitude}/${nextRoute.latitude},${nextRoute.longitude}` : '';
+                    const legKm = nextRoute
+                      ? calculateDistanceKm(
+                          Number(r.latitude),
+                          Number(r.longitude),
+                          Number(nextRoute.latitude),
+                          Number(nextRoute.longitude)
+                        )
+                      : 0;
                     
                     return (
                       <div key={r.id || i} className="relative">
@@ -808,12 +866,12 @@ export const GPSTrackingModule: React.FC = () => {
                         </div>
                         <p className="text-xs font-bold text-emerald-400">
                           {i === 0 ? 'START: ' : isLast ? 'END: ' : `LOCATION ${i + 1}: `}
-                          <span className="text-white">{formatExcelDate(r.resultDate)}</span>
+                          <span className="text-white">{formatToDDMMYYYYHHMM(r.resultDate)}</span>
                         </p>
                         <p className="text-xs text-slate-400 mt-1">{r.address}</p>
                         
                         {!isLast && (
-                          <div className="mt-5 mb-1 relative">
+                          <div className="mt-5 mb-1 relative flex items-center gap-2 flex-wrap">
                             <div className="absolute -left-[30px] top-1/2 -translate-y-1/2 flex flex-col items-center justify-center gap-0.5 text-emerald-500/50">
                               <ChevronDown className="w-4 h-4" />
                             </div>
@@ -826,6 +884,11 @@ export const GPSTrackingModule: React.FC = () => {
                               <span>View Route: {i + 1} ➔ {i + 2}</span>
                               <ExternalLink className="w-3 h-3" />
                             </a>
+                            {legKm > 0 && (
+                              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/60">
+                                ~{legKm} KM
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
