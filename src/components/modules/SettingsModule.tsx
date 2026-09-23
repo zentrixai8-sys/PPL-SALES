@@ -58,13 +58,13 @@ export const SettingsModule: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
-      <div className="p-6 rounded-2xl bg-white dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/40 border border-slate-200 dark:border-slate-800 flex items-center gap-4 shadow-sm">
-        <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 flex items-center justify-center text-sky-600 shrink-0">
-          <Settings className="w-6 h-6" />
+      <div className="p-3.5 sm:p-6 rounded-xl sm:rounded-2xl bg-white dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/40 border border-slate-200 dark:border-slate-800 flex items-center gap-3 sm:gap-4 shadow-sm">
+        <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 flex items-center justify-center text-sky-600 shrink-0">
+          <Settings className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">System Settings & Controls</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <h1 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">System Settings & Controls</h1>
+          <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Configure application theme, broadcast company notices, and manage live news bar
           </p>
         </div>
@@ -72,20 +72,20 @@ export const SettingsModule: React.FC = () => {
 
       {/* Admin Broadcast Announcement & Live News Bar Control */}
       {isAdmin && (
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900/60 shadow-lg shadow-indigo-500/5 space-y-5">
+        <div className="p-3.5 sm:p-6 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-900/60 shadow-lg shadow-indigo-500/5 space-y-4 sm:space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                <Radio className="w-5 h-5 animate-pulse" />
+              <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                <Radio className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
               </div>
               <div>
-                <h2 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>Send Broadcast Notice (Live News Bar)</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-600 text-white font-extrabold uppercase tracking-wider">
+                <h2 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>Send Broadcast Notice</span>
+                  <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-indigo-600 text-white font-extrabold uppercase tracking-wider">
                     Admin
                   </span>
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400">
                   Notice likhein jo sabhi sales rep ko Notification Bell aur top screen News Bar me realtime run ho
                 </p>
               </div>

@@ -384,14 +384,14 @@ export const ReportsModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-blue-950/50 via-slate-900 to-indigo-950/50 border border-blue-800/30">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 shadow-lg shadow-blue-950/40">
-            <FileSpreadsheet className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-950/50 via-slate-900 to-indigo-950/50 border border-blue-800/30">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 shadow-lg shadow-blue-950/40">
+            <FileSpreadsheet className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Sales Reporting & Export Engine</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">Sales Reporting & Export Engine</h1>
+            <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
               Generate Daily, Weekly & Monthly filtered reports and summaries
             </p>
           </div>
@@ -401,36 +401,36 @@ export const ReportsModule: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={exportToPDF}
-            className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             title="Export as PDF Document"
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>PDF</span>
           </button>
 
           <button
             onClick={exportToExcel}
-            className="px-3.5 py-2.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             title="Export as Excel File"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Excel</span>
           </button>
 
           <button
             onClick={exportToCSV}
-            className="px-3.5 py-2.5 rounded-xl bg-sky-950/80 hover:bg-sky-900 border border-sky-800 text-sky-600 text-xs font-semibold flex items-center gap-1.5 transition-all"
+            className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-sky-950/80 hover:bg-sky-900 border border-sky-800 text-sky-600 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             title="Export as CSV File"
           >
-            <FileCode className="w-4 h-4" />
+            <FileCode className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>CSV</span>
           </button>
         </div>
       </div>
 
       {/* Filter Controls Bar */}
-      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 text-xs">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="p-3 sm:p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
         <div>
           <label className="block text-slate-400 mb-1 font-semibold">Report Period</label>
           <select

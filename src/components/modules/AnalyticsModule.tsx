@@ -250,47 +250,47 @@ export const AnalyticsModule: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Executive Hero Banner */}
-      <div className="relative overflow-hidden p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-sm dark:shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="relative overflow-hidden p-3.5 sm:p-6 rounded-xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-sm dark:shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
         <div className="pointer-events-none absolute -top-24 -left-24 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/15 rounded-full blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 bg-emerald-500/10 dark:bg-emerald-500/15 rounded-full blur-3xl" />
 
-        <div className="relative flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-sky-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-lg">
-            <Trophy className="w-7 h-7" />
+        <div className="relative flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-500/20 to-sky-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 shadow-lg">
+            <Trophy className="w-5 h-5 sm:w-7 sm:h-7" />
           </div>
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h1 className="text-base sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                 Sales Analytics &amp; Leadership Suite
               </h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 uppercase tracking-wide">
-                <Sparkles className="w-3 h-3 text-indigo-500" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 uppercase tracking-wide">
+                <Sparkles className="w-2.5 h-2.5 text-indigo-500" />
                 Live AI Insights
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">
               Real-time rep leaderboard, visit velocity, sales revenue &amp; coaching radar
             </p>
           </div>
         </div>
 
         {/* Executive Stats Badges */}
-        <div className="relative flex flex-wrap items-center gap-3">
-          <div className="px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Total Team Sales</div>
-            <div className="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">
-              ₹{totalTeamRevenue.toLocaleString('en-IN')}
+        <div className="relative grid grid-cols-3 sm:flex items-center gap-2 sm:gap-3">
+          <div className="p-2 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 shadow-xs text-center sm:text-left">
+            <div className="text-[9px] sm:text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">Total Sales</div>
+            <div className="text-xs sm:text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">
+              ₹{(totalTeamRevenue / 1000).toFixed(0)}k
             </div>
           </div>
-          <div className="px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Visits Closed</div>
-            <div className="text-base font-black text-sky-600 dark:text-sky-400 font-mono">
-              {totalCompletedVisits} <span className="text-xs text-slate-400 font-normal">/ {totalPlans}</span>
+          <div className="p-2 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 shadow-xs text-center sm:text-left">
+            <div className="text-[9px] sm:text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">Closed</div>
+            <div className="text-xs sm:text-base font-black text-sky-600 dark:text-sky-400 font-mono">
+              {totalCompletedVisits} <span className="text-[10px] sm:text-xs text-slate-400 font-normal">/{totalPlans}</span>
             </div>
           </div>
-          <div className="px-4 py-2 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Execution Rate</div>
-            <div className="text-base font-black text-indigo-600 dark:text-indigo-400 font-mono">
+          <div className="p-2 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 shadow-xs text-center sm:text-left">
+            <div className="text-[9px] sm:text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">Rate</div>
+            <div className="text-xs sm:text-base font-black text-indigo-600 dark:text-indigo-400 font-mono">
               {averageEfficiency}%
             </div>
           </div>
@@ -298,41 +298,41 @@ export const AnalyticsModule: React.FC = () => {
       </div>
 
       {/* Modern Navigation Tab Switcher */}
-      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 w-full sm:w-auto overflow-x-auto">
+      <div className="flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 w-full sm:w-auto overflow-x-auto">
         <button
           onClick={() => setActiveTab('leaderboard')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+          className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
             activeTab === 'leaderboard'
               ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <Trophy className="w-3.5 h-3.5 text-amber-500" />
-          <span>Leaderboard &amp; Top Performers</span>
+          <span>Leaderboard</span>
         </button>
 
         <button
           onClick={() => setActiveTab('performance')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+          className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
             activeTab === 'performance'
               ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <Target className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Performance Matrix &amp; Coaching Radar</span>
+          <span>Performance Matrix</span>
         </button>
 
         <button
           onClick={() => setActiveTab('charts')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+          className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
             activeTab === 'charts'
               ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <BarChart3 className="w-3.5 h-3.5 text-sky-500" />
-          <span>Interactive Visual Analytics</span>
+          <span>Visual Analytics</span>
         </button>
       </div>
 

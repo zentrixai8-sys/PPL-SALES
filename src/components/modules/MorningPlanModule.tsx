@@ -422,17 +422,17 @@ export const MorningPlanModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+      <div className="relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
         {/* Soft accent glow — theme-safe */}
         <div className="pointer-events-none absolute -top-20 -right-10 w-64 h-64 bg-amber-400/20 rounded-full blur-3xl" />
 
-        <div className="relative flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-amber-500/30">
-            <Sun className="w-6 h-6" />
+        <div className="relative flex items-center gap-3 sm:gap-4">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-amber-500/30">
+            <Sun className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Morning Follow Up Plans</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">Morning Follow Up Plans</h1>
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">
               Sales team daily planned company visits &amp; follow ups
             </p>
           </div>
@@ -442,9 +442,9 @@ export const MorningPlanModule: React.FC = () => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => setShowModal(true)}
-          className="relative flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
+          className="relative flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white font-bold text-xs shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>New Morning Plan</span>
         </motion.button>
       </div>
@@ -491,43 +491,43 @@ export const MorningPlanModule: React.FC = () => {
                 />
               </button>
 
-              {/* Floating Calendar Popover matching reference design - Small Compact */}
+              {/* Floating Calendar Popover - Small, Compact & Perfectly Positioned */}
               <AnimatePresence>
                 {isCalendarOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                    initial={{ opacity: 0, y: 4, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                    transition={{ duration: 0.14, ease: 'easeOut' }}
-                    className="absolute right-0 sm:right-auto sm:left-0 mt-2 z-50 w-[275px] sm:w-[295px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3.5 text-slate-800 dark:text-slate-100 select-none backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10"
+                    exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                    transition={{ duration: 0.12, ease: 'easeOut' }}
+                    className="absolute left-0 top-full mt-1.5 z-50 w-[245px] sm:w-[258px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-2.5 text-slate-800 dark:text-slate-100 select-none backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10"
                   >
                     {/* Month Navigation Header */}
-                    <div className="flex items-center justify-between pb-2.5 px-1">
+                    <div className="flex items-center justify-between pb-1.5 px-0.5">
                       <button
                         type="button"
                         onClick={handlePrevMonth}
-                        className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                        className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                         title="Previous Month"
                       >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-3.5 h-3.5" />
                       </button>
 
-                      <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">
                         {MONTH_NAMES[currentMonth]} {currentYear}
                       </h4>
 
                       <button
                         type="button"
                         onClick={handleNextMonth}
-                        className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                        className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                         title="Next Month"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
                     {/* Weekday Headers */}
-                    <div className="grid grid-cols-7 gap-0.5 text-center text-[9.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider pb-1.5">
+                    <div className="grid grid-cols-7 gap-0.5 text-center text-[8.5px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pb-1">
                       {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((d) => (
                         <span key={d}>
                           {d}
@@ -536,10 +536,10 @@ export const MorningPlanModule: React.FC = () => {
                     </div>
 
                     {/* Days Grid */}
-                    <div className="grid grid-cols-7 gap-y-1.5 gap-x-0.5 pb-2.5">
+                    <div className="grid grid-cols-7 gap-y-1 gap-x-0.5 pb-2">
                       {/* Empty padding slots */}
                       {Array.from({ length: startDayOfWeek }).map((_, i) => (
-                        <div key={`empty-${i}`} className="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5" />
+                        <div key={`empty-${i}`} className="w-6.5 h-6.5" />
                       ))}
 
                       {/* Day cells */}
@@ -560,18 +560,18 @@ export const MorningPlanModule: React.FC = () => {
                               setSelectedDateFilter(dateKey);
                               setIsCalendarOpen(false);
                             }}
-                            className={`w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 mx-auto rounded-full text-xs font-semibold flex flex-col items-center justify-center relative transition-all cursor-pointer ${
+                            className={`w-6.5 h-6.5 mx-auto rounded-lg text-[10.5px] font-semibold flex flex-col items-center justify-center relative transition-all cursor-pointer ${
                               isSelected
-                                ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/30 scale-105 z-10'
+                                ? 'bg-indigo-600 text-white font-bold shadow-xs scale-105 z-10'
                                 : isToday
-                                ? 'border-1.5 border-indigo-600 dark:border-indigo-400 text-slate-900 dark:text-white font-bold bg-white dark:bg-slate-900 shadow-xs'
+                                ? 'border border-indigo-600 dark:border-indigo-400 text-slate-900 dark:text-white font-bold bg-indigo-50/50 dark:bg-indigo-950/40'
                                 : statusInfo
                                 ? 'bg-slate-100/90 dark:bg-slate-800/70 text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                : 'bg-slate-50 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                : 'bg-slate-50/60 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                             }`}
                             title={`${dateKey}${statusInfo ? ` (${statusInfo.totalCount} entries)` : ''}`}
                           >
-                            <span className="leading-none text-[11px] sm:text-xs">{dayNum}</span>
+                            <span className="leading-none">{dayNum}</span>
 
                             {/* Status Dots underneath */}
                             {statusInfo && !isSelected && (
@@ -595,28 +595,28 @@ export const MorningPlanModule: React.FC = () => {
                       })}
                     </div>
 
-                    {/* Legend Footer matching reference image */}
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px]">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-medium">
-                          <span className="w-2.5 h-2.5 rounded-full border-1.5 border-indigo-500 inline-block" />
+                    {/* Legend Footer */}
+                    <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[8.5px]">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="flex items-center gap-0.5 text-slate-500 dark:text-slate-400">
+                          <span className="w-1.5 h-1.5 rounded-full border border-indigo-500 inline-block" />
                           <span>Today</span>
                         </span>
-                        <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="flex items-center gap-0.5 text-slate-500 dark:text-slate-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
                           <span>Plan</span>
                         </span>
-                        <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="flex items-center gap-0.5 text-slate-500 dark:text-slate-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                          <span>Actual</span>
+                          <span>Act</span>
                         </span>
-                        <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="flex items-center gap-0.5 text-slate-500 dark:text-slate-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" />
                           <span>Leave</span>
                         </span>
-                        <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="flex items-center gap-0.5 text-slate-500 dark:text-slate-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-purple-500 inline-block" />
-                          <span>Travel</span>
+                          <span>Trvl</span>
                         </span>
                       </div>
 
@@ -626,7 +626,7 @@ export const MorningPlanModule: React.FC = () => {
                           setSelectedDateFilter('ALL');
                           setIsCalendarOpen(false);
                         }}
-                        className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shrink-0 ml-1"
+                        className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[8.5px] font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shrink-0 ml-1"
                       >
                         All
                       </button>

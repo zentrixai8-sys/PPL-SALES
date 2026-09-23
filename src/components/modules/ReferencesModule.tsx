@@ -219,16 +219,16 @@ export const ReferencesModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Module Header */}
-      <div className="relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
+      <div className="relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-6 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800 shadow-sm">
         <div className="pointer-events-none absolute -top-20 -right-10 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl" />
 
-        <div className="relative flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-400 to-sky-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-500/30">
-            <UserPlus className="w-6 h-6" />
+        <div className="relative flex items-center gap-3 sm:gap-4">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-400 to-sky-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-500/30">
+            <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">References Directory</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">References Directory</h1>
+            <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
               Manage client references, track sales executive allotments, and follow-up schedules
             </p>
           </div>
@@ -238,7 +238,7 @@ export const ReferencesModule: React.FC = () => {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-800 transition-all cursor-pointer disabled:opacity-50"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-slate-200 text-xs font-semibold border border-slate-800 transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-sky-600 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Sync Records</span>
@@ -248,7 +248,7 @@ export const ReferencesModule: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleOpenModal}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs transition-all shadow-lg shadow-sky-500/25 cursor-pointer"
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-bold text-xs transition-all shadow-lg shadow-sky-500/25 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Reference</span>
@@ -257,35 +257,35 @@ export const ReferencesModule: React.FC = () => {
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="group relative overflow-hidden p-5 bg-slate-900 border border-slate-800 rounded-2xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 space-y-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="group relative overflow-hidden p-3 sm:p-5 bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 space-y-0.5 sm:space-y-1">
           <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-slate-400 to-slate-600" />
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-2">Total References</p>
-          <p className="text-2xl font-black text-white pl-2 tabular-nums">{references.length}</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-2">Total References</p>
+          <p className="text-lg sm:text-2xl font-black text-white pl-2 tabular-nums">{references.length}</p>
         </div>
-        <div className="group relative overflow-hidden p-5 bg-slate-900 border border-slate-800 rounded-2xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 space-y-1">
+        <div className="group relative overflow-hidden p-3 sm:p-5 bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 space-y-0.5 sm:space-y-1">
           <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-sky-400 to-blue-500" />
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-2">Filtered Count</p>
-          <p className="text-2xl font-black text-sky-600 pl-2 tabular-nums">{filteredReferences.length}</p>
+          <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-2">Filtered Count</p>
+          <p className="text-lg sm:text-2xl font-black text-sky-600 pl-2 tabular-nums">{filteredReferences.length}</p>
         </div>
-        <div className="group relative overflow-hidden p-5 bg-slate-900 border border-slate-800 rounded-2xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 space-y-1">
+        <div className="group relative overflow-hidden p-3 sm:p-5 bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 space-y-0.5 sm:space-y-1">
           <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-indigo-400 to-purple-500" />
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-2">Sales Execs</p>
-          <p className="text-2xl font-black text-indigo-400 pl-2 tabular-nums">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-2">Sales Execs</p>
+          <p className="text-lg sm:text-2xl font-black text-indigo-400 pl-2 tabular-nums">
             {new Set(references.map(r => r.allottedToSalesPersonName).filter(Boolean)).size}
           </p>
         </div>
-        <div className="group relative overflow-hidden p-5 bg-slate-900 border border-slate-800 rounded-2xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 space-y-1">
+        <div className="group relative overflow-hidden p-3 sm:p-5 bg-slate-900 border border-slate-800 rounded-xl sm:rounded-2xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 space-y-0.5 sm:space-y-1">
           <div className="absolute top-0 left-0 h-full w-1 bg-gradient-to-b from-emerald-400 to-teal-500" />
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-2">Target Companies</p>
-          <p className="text-2xl font-black text-emerald-400 pl-2 tabular-nums">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wider pl-2">Target Companies</p>
+          <p className="text-lg sm:text-2xl font-black text-emerald-400 pl-2 tabular-nums">
             {new Set(references.map(r => r.companyName).filter(Boolean)).size}
           </p>
         </div>
       </div>
 
       {/* Action Bar & Filters */}
-      <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 sm:gap-3">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -298,12 +298,12 @@ export const ReferencesModule: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl">
+          <div className="flex-1 sm:flex-initial flex items-center gap-1.5 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <select
               value={selectedSalesPerson}
               onChange={e => setSelectedSalesPerson(e.target.value)}
-              className="bg-transparent text-xs text-slate-200 focus:outline-none font-medium cursor-pointer"
+              className="bg-transparent text-xs text-slate-200 focus:outline-none font-medium cursor-pointer w-full"
             >
               <option value="All" className="bg-slate-900 text-white">All Sales Representatives</option>
               {salesPersonList.map(name => (
@@ -316,7 +316,7 @@ export const ReferencesModule: React.FC = () => {
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-all cursor-pointer"
             title="Export filtered records to CSV"
           >
             <Download className="w-3.5 h-3.5 text-sky-600" />
@@ -326,9 +326,9 @@ export const ReferencesModule: React.FC = () => {
       </div>
 
       {/* References Data Table */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+      <div className="p-3.5 sm:p-6 rounded-xl sm:rounded-3xl bg-slate-900 border border-slate-800 space-y-3 sm:space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h2 className="font-bold text-base text-white flex items-center gap-2">
+          <h2 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
             <FileSpreadsheet className="w-4 h-4 text-sky-600" />
             <span>References Master Sheet ({filteredReferences.length})</span>
           </h2>

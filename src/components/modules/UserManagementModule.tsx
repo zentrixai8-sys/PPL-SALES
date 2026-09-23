@@ -231,40 +231,40 @@ export const UserManagementModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Banner Header with Gradient Backdrop */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 dark:from-blue-950/50 dark:via-slate-900 dark:to-indigo-950/40 p-4 sm:p-5 rounded-3xl border border-blue-200/80 dark:border-blue-800/60 shadow-sm relative overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-3.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 dark:from-blue-950/50 dark:via-slate-900 dark:to-indigo-950/40 p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-blue-200/80 dark:border-blue-800/60 shadow-sm relative overflow-hidden">
         {/* Soft gradient glow accents */}
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-gradient-to-tr from-purple-500/15 to-blue-500/15 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="flex items-center gap-3.5 relative z-10">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-blue-500/30 shrink-0 ring-1 ring-white/20">
-            <Users className="w-5 h-5" />
+        <div className="flex items-center gap-3 sm:gap-3.5 relative z-10">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-blue-500/30 shrink-0 ring-1 ring-white/20">
+            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-sky-300 border border-blue-300/60 dark:border-blue-700/60 flex items-center gap-1">
+              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-sky-300 border border-blue-300/60 dark:border-blue-700/60 flex items-center gap-1">
                 <Sparkles className="w-2.5 h-2.5 text-blue-600 dark:text-sky-400" />
-                <span>SUPABASE AUTH &amp; ACCESS CONTROL</span>
+                <span>SUPABASE AUTH</span>
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-base sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               User &amp; Employee Management
             </h1>
-            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+            <p className="hidden sm:block text-xs text-slate-600 dark:text-slate-400 font-medium">
               Create and manage sales force IDs, credentials, and roles directly in Supabase
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 relative z-10 self-end sm:self-center">
+        <div className="flex items-center gap-2 sm:gap-2.5 relative z-10 self-end sm:self-center">
           <button
             type="button"
             onClick={loadUsers}
             disabled={isLoading}
-            className="p-2.5 rounded-2xl border border-blue-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-50/80 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
+            className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border border-blue-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-50/80 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
             title="Refresh Users"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
           </button>
 
           <motion.button
@@ -272,16 +272,16 @@ export const UserManagementModule: React.FC = () => {
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={openCreateModal}
-            className="py-2.5 px-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="py-2 sm:py-2.5 px-3.5 sm:px-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Create New ID</span>
           </motion.button>
         </div>
       </div>
 
       {/* Compact Metrics Row with Gradient Styling */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Total Accounts */}
         <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-white to-indigo-500/5 dark:from-blue-950/40 dark:via-slate-900 dark:to-indigo-950/20 p-3.5 sm:p-4 rounded-3xl border border-blue-200/80 dark:border-blue-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
           <div className="flex items-center justify-between gap-2">

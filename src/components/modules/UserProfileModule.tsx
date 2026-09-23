@@ -136,16 +136,16 @@ export const UserProfileModule: React.FC = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="p-6 sm:p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden"
+        className="p-3.5 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl relative overflow-hidden"
       >
         {/* Background decorative ambient glow */}
         <div className="absolute -right-20 -top-20 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-20 -bottom-20 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-4 sm:gap-6">
           {/* Avatar with Upload & Enlarge Overlay */}
-          <div className="relative group shrink-0">
-            <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden ring-4 ring-sky-500/30 bg-slate-950 relative shadow-2xl shadow-sky-950/40">
+          <div className="relative group shrink-0 flex flex-col items-center">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl overflow-hidden ring-4 ring-sky-500/30 bg-slate-950 relative shadow-2xl shadow-sky-950/40">
               <img
                 src={currentDpUrl}
                 alt={user?.userName}
@@ -155,65 +155,65 @@ export const UserProfileModule: React.FC = () => {
               {/* Uploading Spinner */}
               {isUploadingDp && (
                 <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-1 z-10">
-                  <Loader2 className="w-7 h-7 text-sky-400 animate-spin" />
+                  <Loader2 className="w-6 h-6 sm:w-7 sm:h-7 text-sky-400 animate-spin" />
                   <span className="text-[10px] font-bold">Uploading...</span>
                 </div>
               )}
             </div>
 
             {/* Quick Action Buttons */}
-            <div className="flex items-center justify-center gap-2 mt-3">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-2.5 sm:mt-3">
               <button
                 type="button"
                 onClick={() => setShowDpModal(true)}
-                className="py-1.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer font-semibold"
+                className="py-1 sm:py-1.5 px-2.5 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-xs flex items-center gap-1 sm:gap-1.5 transition-all shadow-xs cursor-pointer font-semibold"
                 title="View Fullscreen Photo"
               >
-                <Maximize2 className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                <span className="text-xs">View</span>
+                <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-sky-600 dark:text-sky-400" />
+                <span className="text-[11px] sm:text-xs">View</span>
               </button>
 
               <button
                 type="button"
                 disabled={isUploadingDp}
                 onClick={() => fileInputRef.current?.click()}
-                className="py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 !text-white text-xs flex items-center gap-1.5 transition-all shadow-md shadow-indigo-600/25 disabled:opacity-50 cursor-pointer font-semibold"
+                className="py-1 sm:py-1.5 px-2.5 sm:px-3 rounded-lg sm:rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 !text-white text-xs flex items-center gap-1 sm:gap-1.5 transition-all shadow-md shadow-indigo-600/25 disabled:opacity-50 cursor-pointer font-semibold"
                 title="Upload New Photo"
               >
-                <Camera className="w-3.5 h-3.5 !text-white" />
-                <span className="text-xs !text-white font-bold">Change</span>
+                <Camera className="w-3 h-3 sm:w-3.5 sm:h-3.5 !text-white" />
+                <span className="text-[11px] sm:text-xs !text-white font-bold">Change</span>
               </button>
             </div>
           </div>
 
           {/* User Essential Title & Tags */}
-          <div className="text-center md:text-left flex-1 space-y-2">
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-950 text-sky-400 border border-sky-800 text-xs font-bold shadow-xs">
-                <Shield className="w-3.5 h-3.5" />
+          <div className="text-center md:text-left flex-1 space-y-1.5 sm:space-y-2">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 sm:gap-2">
+              <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-sky-950 text-sky-400 border border-sky-800 text-[11px] sm:text-xs font-bold shadow-xs">
+                <Shield className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>{user?.role} Account</span>
               </span>
 
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 text-xs font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 text-[11px] sm:text-xs font-semibold">
+                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>Active Employee</span>
               </span>
 
-              <span className="px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-xs font-mono font-semibold">
+              <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700 text-[11px] sm:text-xs font-mono font-semibold">
                 {empDetails.empCode}
               </span>
             </div>
 
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center justify-center md:justify-start gap-2">
+              <h1 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center justify-center md:justify-start gap-1.5 sm:gap-2">
                 <span>{user?.userName}</span>
-                <BadgeCheck className="w-6 h-6 text-sky-400 inline shrink-0" />
+                <BadgeCheck className="w-5 h-5 sm:w-6 sm:h-6 text-sky-400 inline shrink-0" />
               </h1>
-              <p className="text-sm font-semibold text-sky-400 mt-0.5">{empDetails.designation}</p>
-              <p className="text-xs text-slate-400">{empDetails.department}</p>
+              <p className="text-xs sm:text-sm font-semibold text-sky-400 mt-0.5">{empDetails.designation}</p>
+              <p className="text-[11px] sm:text-xs text-slate-400">{empDetails.department}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-300 pt-2 border-t border-slate-800/80">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 text-xs text-slate-300 pt-1.5 sm:pt-2 border-t border-slate-800/80">
               <div className="flex items-center justify-center md:justify-start gap-2">
                 <Mail className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                 <span className="truncate">{empDetails.email}</span>
@@ -228,26 +228,26 @@ export const UserProfileModule: React.FC = () => {
       </motion.div>
 
       {/* KPI Performance Highlights */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800 space-y-0.5 sm:space-y-1 shadow-sm">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Monthly Quota</span>
-            <Award className="w-4 h-4 text-amber-400" />
+            <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
           </div>
-          <div className="text-lg sm:text-xl font-bold text-white">{empDetails.monthlyTarget}</div>
-          <div className="text-[10px] text-emerald-400 font-semibold">Assigned Sales Target</div>
+          <div className="text-base sm:text-xl font-bold text-white">{empDetails.monthlyTarget}</div>
+          <div className="text-[9px] sm:text-[10px] text-emerald-400 font-semibold">Assigned Sales Target</div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800 space-y-0.5 sm:space-y-1 shadow-sm">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Target Achieved</span>
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
           </div>
-          <div className="text-lg sm:text-xl font-bold text-emerald-400">{empDetails.targetAchievement}</div>
-          <div className="text-[10px] text-slate-400">YTD Performance Rating</div>
+          <div className="text-base sm:text-xl font-bold text-emerald-400">{empDetails.targetAchievement}</div>
+          <div className="text-[9px] sm:text-[10px] text-slate-400">YTD Performance Rating</div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-1 shadow-sm">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800 space-y-0.5 sm:space-y-1 shadow-sm">
           <div className="flex items-center justify-between text-slate-400 text-xs">
             <span>Total Visits</span>
             <CheckCircle className="w-4 h-4 text-sky-400" />

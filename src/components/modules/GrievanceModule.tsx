@@ -39,7 +39,8 @@ import {
   HelpCircle,
   Maximize2,
   List,
-  LayoutGrid
+  LayoutGrid,
+  Tag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -81,6 +82,25 @@ export const GrievanceModule: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [priorityFilter, setPriorityFilter] = useState<string>('All');
   const [salesPersonFilter, setSalesPersonFilter] = useState<string>('All');
+  const [activeDropdown, setActiveDropdown] = useState<'sales' | 'category' | 'priority' | null>(null);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    if (activeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside as any);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside as any);
+    };
+  }, [activeDropdown]);
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -277,38 +297,38 @@ export const GrievanceModule: React.FC = () => {
   const resolutionRate = totalCount > 0 ? Math.round((closedCount / totalCount) * 100) : 100;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3.5 sm:space-y-6">
       {/* Top Banner & Action */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-md border border-slate-700/70 py-3.5 px-4 sm:px-5 transition-all">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-md border border-slate-700/70 py-2.5 sm:py-3.5 px-3.5 sm:px-5 transition-all">
         {/* Subtle English luxury accent glow */}
         <div className="absolute right-0 top-0 w-60 h-full bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute left-1/4 bottom-0 w-48 h-full bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
           <div className="space-y-0.5 max-w-2xl">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="p-2 rounded-xl bg-slate-800 text-sky-400 border border-slate-700/80 shadow-xs flex items-center justify-center">
-                <ShieldAlert className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+              <div className="p-1.5 sm:p-2 rounded-xl bg-slate-800 text-sky-400 border border-slate-700/80 shadow-xs flex items-center justify-center">
+                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+              <h1 className="text-sm sm:text-lg lg:text-xl font-bold sm:font-extrabold text-white tracking-tight">
                 Customer Grievance &amp; Ticket Center
               </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+              <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold tracking-wider uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span>LIVE HELPDESK</span>
               </span>
             </div>
-            <p className="text-xs text-slate-300 font-normal leading-relaxed pl-0.5">
+            <p className="hidden sm:block text-xs text-slate-300 font-normal leading-relaxed pl-0.5">
               Register dealer &amp; party product issues with multi-image evidence. Managers review, resolve, and close tickets with resolution proof.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center pt-1 md:pt-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 self-start md:self-center pt-0.5 md:pt-0">
             <button
               type="button"
               onClick={() => loadTickets(true)}
               disabled={isRefreshing}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-800/90 text-slate-200 font-semibold text-xs flex items-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow-xs"
+              className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-800/90 text-slate-200 font-semibold text-[11px] sm:text-xs flex items-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow-xs"
               title="Refresh Tickets"
             >
               <RefreshCw className={`w-3.5 h-3.5 text-sky-400 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -318,77 +338,77 @@ export const GrievanceModule: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-blue-600/30 hover:shadow-blue-600/40 transition-all cursor-pointer border border-blue-400/30"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-md shadow-blue-600/30 hover:shadow-blue-600/40 transition-all cursor-pointer border border-blue-400/30"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Raise Grievance Ticket</span>
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+              <span>Raise Ticket</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3.5 lg:gap-4.5">
         {/* Total Tickets */}
-        <div className="relative overflow-hidden p-4.5 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/30 border border-blue-200/90 dark:border-blue-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 to-indigo-600" />
-          <div className="flex items-center justify-between gap-2">
+        <div className="relative overflow-hidden p-3 sm:p-4.5 lg:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/30 border border-blue-200/90 dark:border-blue-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 left-0 right-0 h-1 sm:h-1.5 bg-gradient-to-r from-blue-500 to-indigo-600" />
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
             <div>
-              <p className="text-[11px] font-extrabold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Total Tickets</p>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{totalCount}</h3>
+              <p className="text-[10px] sm:text-[11px] font-extrabold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Total Tickets</p>
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white mt-0.5 sm:mt-1">{totalCount}</h3>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-base shadow-md shadow-blue-500/30 group-hover:scale-110 transition-transform">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-xs sm:text-base shadow-md shadow-blue-500/30 group-hover:scale-110 transition-transform shrink-0">
               #
             </div>
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">All logged customer issues</p>
+          <p className="hidden sm:block text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">All logged customer issues</p>
         </div>
 
         {/* Open / Pending */}
-        <div className="relative overflow-hidden p-4.5 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/30 border border-amber-200/90 dark:border-amber-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 to-orange-500" />
-          <div className="flex items-center justify-between gap-2">
+        <div className="relative overflow-hidden p-3 sm:p-4.5 lg:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/30 border border-amber-200/90 dark:border-amber-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 left-0 right-0 h-1 sm:h-1.5 bg-gradient-to-r from-amber-400 to-orange-500" />
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
             <div>
-              <p className="text-[11px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Open / Pending</p>
-              <h3 className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">{openCount}</h3>
+              <p className="text-[10px] sm:text-[11px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Open / Pending</p>
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-amber-600 dark:text-amber-400 mt-0.5 sm:mt-1">{openCount}</h3>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/30 group-hover:scale-110 transition-transform">
-              <Clock className="w-5 h-5 stroke-[2.5]" />
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/30 group-hover:scale-110 transition-transform shrink-0">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             </div>
           </div>
-          <p className="text-[11px] text-amber-700/90 dark:text-amber-400/90 mt-2 font-bold">
+          <p className="hidden sm:block text-[11px] text-amber-700/90 dark:text-amber-400/90 mt-2 font-bold">
             {openCount > 0 ? `Action required on ${openCount} issue${openCount > 1 ? 's' : ''}` : 'No pending tickets'}
           </p>
         </div>
 
         {/* Resolved & Closed */}
-        <div className="relative overflow-hidden p-4.5 sm:p-5 rounded-3xl bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30 border border-emerald-200/90 dark:border-emerald-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500" />
-          <div className="flex items-center justify-between gap-2">
+        <div className="relative overflow-hidden p-3 sm:p-4.5 lg:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30 border border-emerald-200/90 dark:border-emerald-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 left-0 right-0 h-1 sm:h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500" />
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
             <div>
-              <p className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Resolved &amp; Closed</p>
-              <h3 className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{closedCount}</h3>
+              <p className="text-[10px] sm:text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Resolved</p>
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 sm:mt-1">{closedCount}</h3>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30 group-hover:scale-110 transition-transform">
-              <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30 group-hover:scale-110 transition-transform shrink-0">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             </div>
           </div>
-          <p className="text-[11px] text-emerald-700/90 dark:text-emerald-400/90 mt-2 font-bold">Successfully closed with proof</p>
+          <p className="hidden sm:block text-[11px] text-emerald-700/90 dark:text-emerald-400/90 mt-2 font-bold">Successfully closed with proof</p>
         </div>
 
         {/* Resolution Rate */}
-        <div className="relative overflow-hidden p-4.5 sm:p-5 rounded-3xl bg-gradient-to-br from-purple-50/80 via-white to-pink-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/30 border border-purple-200/90 dark:border-purple-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 to-pink-500" />
-          <div className="flex items-center justify-between gap-2">
+        <div className="relative overflow-hidden p-3 sm:p-4.5 lg:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-purple-50/80 via-white to-pink-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/30 border border-purple-200/90 dark:border-purple-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 left-0 right-0 h-1 sm:h-1.5 bg-gradient-to-r from-purple-500 to-pink-500" />
+          <div className="flex items-center justify-between gap-1.5 sm:gap-2">
             <div>
-              <p className="text-[11px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Resolution Rate</p>
-              <h3 className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400 mt-1">{resolutionRate}%</h3>
+              <p className="text-[10px] sm:text-[11px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Resolution</p>
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-purple-600 dark:text-purple-400 mt-0.5 sm:mt-1">{resolutionRate}%</h3>
             </div>
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 text-white flex items-center justify-center font-black text-base shadow-md shadow-purple-500/30 group-hover:scale-110 transition-transform">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 text-white flex items-center justify-center font-black text-xs sm:text-base shadow-md shadow-purple-500/30 group-hover:scale-110 transition-transform shrink-0">
               %
             </div>
           </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-2.5">
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 sm:h-2 rounded-full overflow-hidden mt-1.5 sm:mt-2.5">
             <div
               className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 h-full rounded-full transition-all duration-500"
               style={{ width: `${resolutionRate}%` }}
@@ -398,23 +418,23 @@ export const GrievanceModule: React.FC = () => {
       </div>
 
       {/* Filter & Search Bar with View Switcher */}
-      <div className="p-4 sm:p-4.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+      <div className="p-3.5 sm:p-4.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
         {/* Top Filter Row: Status Tabs + View Toggle */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 slim-scrollbar">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          {/* Status Tabs with smooth scroll on mobile */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar shrink-0">
             {(['All', 'Open', 'Closed'] as const).map(tab => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
                   activeTab === tab
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
-                <span>{tab === 'All' ? 'All Tickets' : tab === 'Open' ? 'Open Issues' : 'Closed / Settled'}</span>
+                <span>{tab === 'All' ? 'All Tickets' : tab === 'Open' ? 'Open Issues' : 'Closed'}</span>
                 <span
                   className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
                     activeTab === tab ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
@@ -427,11 +447,11 @@ export const GrievanceModule: React.FC = () => {
           </div>
 
           {/* View Switcher Toggle: List vs Grid */}
-          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 shrink-0">
+          <div className="flex items-center justify-end gap-1 p-0.5 sm:p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 self-end sm:self-auto shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('list')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === 'list'
                   ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-sky-400 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -439,12 +459,12 @@ export const GrievanceModule: React.FC = () => {
               title="List View"
             >
               <List className="w-3.5 h-3.5" />
-              <span>List View</span>
+              <span>List</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === 'grid'
                   ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-sky-400 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -452,63 +472,225 @@ export const GrievanceModule: React.FC = () => {
               title="Grid View"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Grid View</span>
+              <span>Grid</span>
             </button>
           </div>
         </div>
 
-        {/* Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 pt-0.5">
+        {/* Inputs: Search + Compact Filter Dropdowns */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 pt-0.5">
+          {/* Search Bar */}
           <div className="lg:col-span-4 relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search by customer, ticket #, mobile, city..."
+              placeholder="Search by customer, ticket #, mobile..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9.5 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full pl-8.5 pr-8 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
-          <div className="lg:col-span-3">
-            <select
-              value={salesPersonFilter}
-              onChange={e => setSalesPersonFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-            >
-              <option value="All">All Sales Persons</option>
-              {salesPersonsList.map(sp => (
-                <option key={sp} value={sp}>{sp}</option>
-              ))}
-            </select>
-          </div>
+          {/* Filter Selects Grid */}
+          <div ref={filterDropdownRef} className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-2 relative">
+            {/* Sales Person Custom Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setActiveDropdown(prev => prev === 'sales' ? null : 'sales')}
+                className={`w-full flex items-center justify-between pl-2.5 pr-2 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer truncate shadow-2xs ${
+                  salesPersonFilter !== 'All'
+                    ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400/80 text-blue-700 dark:text-blue-300'
+                    : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{salesPersonFilter === 'All' ? 'All Sales Reps' : salesPersonFilter}</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${activeDropdown === 'sales' ? 'rotate-180 text-blue-500' : ''}`} />
+              </button>
 
-          <div className="lg:col-span-3">
-            <select
-              value={categoryFilter}
-              onChange={e => setCategoryFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-            >
-              <option value="All">All Categories</option>
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
+              <AnimatePresence>
+                {activeDropdown === 'sales' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute left-0 top-full mt-1.5 z-50 w-full min-w-[190px] max-w-[260px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-1 text-slate-800 dark:text-slate-100 max-h-56 overflow-y-auto ring-1 ring-black/5 dark:ring-white/10"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => { setSalesPersonFilter('All'); setActiveDropdown(null); }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                        salesPersonFilter === 'All' ? 'bg-blue-600 text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                      }`}
+                    >
+                      <span>All Sales Reps</span>
+                      {salesPersonFilter === 'All' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                    </button>
+                    {salesPersonsList.map(sp => (
+                      <button
+                        key={sp}
+                        type="button"
+                        onClick={() => { setSalesPersonFilter(sp); setActiveDropdown(null); }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                          salesPersonFilter === sp ? 'bg-blue-600 text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <span className="truncate">{sp}</span>
+                        {salesPersonFilter === sp && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          <div className="lg:col-span-2">
-            <select
-              value={priorityFilter}
-              onChange={e => setPriorityFilter(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-            >
-              <option value="All">All Priorities</option>
-              {PRIORITIES.map(p => (
-                <option key={p} value={p}>{p} Priority</option>
-              ))}
-            </select>
+            {/* Category Custom Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setActiveDropdown(prev => prev === 'category' ? null : 'category')}
+                className={`w-full flex items-center justify-between pl-2.5 pr-2 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer truncate shadow-2xs ${
+                  categoryFilter !== 'All'
+                    ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400/80 text-blue-700 dark:text-blue-300'
+                    : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Tag className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{categoryFilter === 'All' ? 'All Categories' : categoryFilter}</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${activeDropdown === 'category' ? 'rotate-180 text-blue-500' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {activeDropdown === 'category' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 sm:right-auto sm:left-0 top-full mt-1.5 z-50 w-full min-w-[210px] max-w-[280px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-1 text-slate-800 dark:text-slate-100 max-h-56 overflow-y-auto ring-1 ring-black/5 dark:ring-white/10"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => { setCategoryFilter('All'); setActiveDropdown(null); }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                        categoryFilter === 'All' ? 'bg-blue-600 text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                      }`}
+                    >
+                      <span>All Categories</span>
+                      {categoryFilter === 'All' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                    </button>
+                    {CATEGORIES.map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => { setCategoryFilter(c); setActiveDropdown(null); }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                          categoryFilter === c ? 'bg-blue-600 text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <span className="truncate">{c}</span>
+                        {categoryFilter === c && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Priority Custom Dropdown */}
+            <div className="relative col-span-2 sm:col-span-1">
+              <button
+                type="button"
+                onClick={() => setActiveDropdown(prev => prev === 'priority' ? null : 'priority')}
+                className={`w-full flex items-center justify-between pl-2.5 pr-2 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer truncate shadow-2xs ${
+                  priorityFilter !== 'All'
+                    ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400/80 text-blue-700 dark:text-blue-300'
+                    : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <AlertCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{priorityFilter === 'All' ? 'All Priorities' : `${priorityFilter} Priority`}</span>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${activeDropdown === 'priority' ? 'rotate-180 text-blue-500' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {activeDropdown === 'priority' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 sm:right-auto sm:left-0 top-full mt-1.5 z-50 w-full min-w-[170px] max-w-[240px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-1 text-slate-800 dark:text-slate-100 max-h-56 overflow-y-auto ring-1 ring-black/5 dark:ring-white/10"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => { setPriorityFilter('All'); setActiveDropdown(null); }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                        priorityFilter === 'All' ? 'bg-blue-600 text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                      }`}
+                    >
+                      <span>All Priorities</span>
+                      {priorityFilter === 'All' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                    </button>
+                    {PRIORITIES.map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => { setPriorityFilter(p); setActiveDropdown(null); }}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                          priorityFilter === p ? 'bg-blue-600 text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <span>{p} Priority</span>
+                        {priorityFilter === p && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
+
+        {/* Active Filters Clear Bar */}
+        {(searchTerm || salesPersonFilter !== 'All' || categoryFilter !== 'All' || priorityFilter !== 'All' || activeTab !== 'All') && (
+          <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+            <span className="text-slate-500 dark:text-slate-400 font-medium">
+              Showing filtered results ({filteredTickets.length} ticket{filteredTickets.length !== 1 ? 's' : ''})
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setSalesPersonFilter('All');
+                setCategoryFilter('All');
+                setPriorityFilter('All');
+                setActiveTab('All');
+              }}
+              className="text-blue-600 dark:text-sky-400 font-bold hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <X className="w-3 h-3" />
+              <span>Reset Filters</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Ticket Listing */}

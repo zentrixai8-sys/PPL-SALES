@@ -451,34 +451,34 @@ export const GPSTrackingModule: React.FC = () => {
       />
 
       {/* Top Header Banner */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-sky-950/50 border border-emerald-800/40 shadow-xl">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-lg shadow-emerald-950/40">
-            <Navigation className="w-6 h-6" />
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-4 p-3.5 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900 to-sky-950/50 border border-emerald-800/40 shadow-xl">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 shadow-lg shadow-emerald-950/40">
+            <Navigation className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Real-Time GPS & Excel Upload</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">Real-Time GPS & Excel Upload</h1>
+            <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
               Upload Excel files or capture live pings to record system location data
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={handleRefreshData}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/90 dark:bg-sky-950/80 hover:bg-slate-100 dark:hover:bg-sky-900 border border-slate-200 dark:border-sky-800 text-sky-700 dark:text-sky-300 font-bold text-xs transition-all disabled:opacity-60 cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/90 dark:bg-sky-950/80 hover:bg-slate-100 dark:hover:bg-sky-900 border border-slate-200 dark:border-sky-800 text-sky-700 dark:text-sky-300 font-bold text-xs transition-all disabled:opacity-60 cursor-pointer shadow-xs"
             title="Refresh latest GPS data"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-sky-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{isRefreshing ? 'Syncing...' : 'Refresh GPS Data'}</span>
+            <span>{isRefreshing ? 'Syncing...' : 'Sync GPS'}</span>
           </button>
 
           <button
             onClick={handleDownloadSample}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-all cursor-pointer shadow-xs"
             title="Download sample Excel format"
           >
             <Download className="w-3.5 h-3.5 text-sky-600" />
@@ -487,16 +487,16 @@ export const GPSTrackingModule: React.FC = () => {
 
           <button
             onClick={handleTriggerFileInput}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/25 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/25 transition-all cursor-pointer"
           >
             <Upload className="w-4 h-4" />
-            <span>Upload GPS Excel File</span>
+            <span>Upload GPS Excel</span>
           </button>
 
           {gpsExcelRecords.length > 0 && (
             <button
               onClick={handleClearData}
-              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-xs ${
+              className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border font-bold text-xs transition-all cursor-pointer shadow-xs ${
                 isConfirmingClear
                   ? 'bg-rose-600 hover:bg-rose-500 border-rose-500 text-white animate-pulse'
                   : 'bg-rose-50 dark:bg-rose-950/80 hover:bg-rose-100 dark:hover:bg-rose-900 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
@@ -504,7 +504,7 @@ export const GPSTrackingModule: React.FC = () => {
               title="Clear all Excel uploaded GPS records"
             >
               <XCircle className="w-3.5 h-3.5" />
-              <span>{isConfirmingClear ? 'Click again to confirm' : 'Clear Excel Data'}</span>
+              <span>{isConfirmingClear ? 'Confirm Clear' : 'Clear Excel'}</span>
             </button>
           )}
 
@@ -512,18 +512,18 @@ export const GPSTrackingModule: React.FC = () => {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-2">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-2 overflow-x-auto">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             onClick={() => setActiveTab('excel')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
               activeTab === 'excel'
                 ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-xs'
                 : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Excel Uploaded GPS Records ({gpsExcelRecords.length})</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Excel GPS ({gpsExcelRecords.length})</span>
           </button>
 
           <button

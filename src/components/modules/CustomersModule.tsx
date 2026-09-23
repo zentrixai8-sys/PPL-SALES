@@ -74,14 +74,14 @@ export const CustomersModule: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-slate-900 border border-purple-800/30">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0 shadow-lg shadow-purple-950/40">
-            <Users className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-6 rounded-xl sm:rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-slate-900 border border-purple-800/30">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0 shadow-lg shadow-purple-950/40">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Customer CRM Directory</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <h1 className="text-base sm:text-xl font-bold text-white tracking-tight">Customer CRM Directory</h1>
+            <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
               Party master database and CRM accounts directory
             </p>
           </div>
@@ -97,7 +97,7 @@ export const CustomersModule: React.FC = () => {
             setCrmId(`CRM-${Math.floor(100 + Math.random() * 900)}`);
             setShowModal(true);
           }}
-          className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-500/20 transition-all"
+          className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-500/20 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Customer</span>
@@ -105,25 +105,25 @@ export const CustomersModule: React.FC = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+      <div className="p-3 sm:p-4 rounded-xl bg-slate-900 border border-slate-800">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 sm:top-3" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search party name, city or contact..."
-            className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+            className="w-full pl-9 pr-3 py-1.5 sm:py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-purple-500"
           />
         </div>
       </div>
 
       {/* Customer Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filteredCustomers.map((cust) => (
           <div
             key={cust.id}
-            className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all space-y-3"
+            className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all space-y-2.5 sm:space-y-3"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
