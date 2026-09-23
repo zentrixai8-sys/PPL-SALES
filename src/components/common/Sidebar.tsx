@@ -22,6 +22,7 @@ import {
   Code2,
   CheckCircle2,
   Layers,
+  ShieldAlert,
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 import { motion } from 'motion/react';
@@ -79,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'SALES & CRM',
       items: [
         { id: 'references', label: 'References / Leads', icon: UserPlus, color: 'from-pink-500 to-rose-500' },
+        { id: 'grievances', label: 'Customer Grievances', icon: ShieldAlert, color: 'from-amber-500 to-rose-600', badge: 'Tickets' },
         { id: 'reports', label: 'Reports & Logs', icon: FileSpreadsheet, color: 'from-cyan-500 to-blue-500' },
         { id: 'analytics', label: 'Performance Analytics', icon: BarChart3, color: 'from-violet-500 to-purple-600' },
       ],

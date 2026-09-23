@@ -33,9 +33,11 @@ const TAB_TITLES: Record<NavigationTab, string> = {
   evening_report: 'Evening Report',
   gps_tracking: 'GPS Tracking',
   customers: 'Parties & Dealers',
-  references: 'References',
+  references: 'References / Leads',
+  grievances: 'Customer Grievances',
   reports: 'Reports & Sheets',
   analytics: 'Sales Analytics',
+  users: 'User Management',
   settings: 'App Settings',
   profile: 'My Profile',
 };
@@ -64,26 +66,6 @@ export const Header: React.FC<HeaderProps> = ({
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isHeaderRefreshing, setIsHeaderRefreshing] = useState(false);
-
-  const handleHeaderSync = async () => {
-    if (isHeaderRefreshing) return;
-    setIsHeaderRefreshing(true);
-    try {
-      await Promise.all([
-        refreshMorningPlans(),
-        refreshEveningReports(),
-        refreshGPSData(),
-        refreshReferences(),
-        refreshLeaves()
-      ]);
-      showToast('success', 'Data Synchronized', 'All reports & records are up to date!');
-    } catch (err) {
-      console.warn('Header sync notice:', err);
-    } finally {
-      setTimeout(() => setIsHeaderRefreshing(false), 500);
-    }
-  };
 
   const user = authState.user;
   const userInitial = (user?.userName || 'U').charAt(0).toUpperCase();
@@ -125,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
     }));
 
   return (
-    <header className="sticky top-0 z-30 h-14 md:h-16 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800/80 px-3 md:px-6 flex items-center justify-between text-slate-800 dark:text-slate-100 transition-colors">
+    <header className="sticky top-0 z-30 min-h-[4rem] md:min-h-16 pt-[max(env(safe-area-inset-top,0px),26px)] lg:pt-0 pb-2 md:pb-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-3.5 md:px-6 flex items-center justify-between text-slate-800 dark:text-slate-100 transition-colors shadow-xs">
       {/* Left section: Mobile Brand / Tab title vs Desktop Hamburger & Live Status */}
       <div className="flex items-center gap-2 md:gap-3">
         {/* Mobile View App Header Left */}
@@ -165,18 +147,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right Section: Notifications, Theme Switcher & User Profile */}
       <div className="flex items-center gap-1.5 md:gap-3">
-        {/* Quick Sync/Refresh Button */}
-        <button
-          type="button"
-          onClick={handleHeaderSync}
-          disabled={isHeaderRefreshing}
-          className="p-1.5 md:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-1.5 text-xs font-semibold disabled:opacity-50"
-          title="Refresh All Data"
-        >
-          <RefreshCw className={`w-4 h-4 md:w-4.5 md:h-4.5 text-sky-500 transition-all ${isHeaderRefreshing ? 'animate-spin text-sky-600' : 'hover:rotate-45'}`} />
-          <span className="hidden sm:inline text-sky-600 dark:text-sky-400 font-bold">Sync</span>
-        </button>
-
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}

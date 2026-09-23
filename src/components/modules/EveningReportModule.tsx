@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { EveningReport, MorningPlan } from '../../types';
 import { submitEveningReportToSheet, uploadFileToDrive } from '../../services/api';
@@ -23,13 +23,16 @@ import {
   Clock,
   User,
   ChevronRight,
+  ChevronLeft,
+  ChevronDown,
   X,
   Trash2,
-  Paperclip,
-  UserX,
-  Plane
+  Plane,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface EveningCompanyEntry {
   id: string;
@@ -76,6 +79,36 @@ export const EveningReportModule: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const todayDate = getIndianDateString();
   const [selectedDateFilter, setSelectedDateFilter] = useState<string>(todayDate);
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
+
+  // Interactive Calendar Popover State
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [calViewDate, setCalViewDate] = useState<Date>(() => {
+    const parts = todayDate.split('-');
+    if (parts.length === 3) {
+      const d = parseInt(parts[0], 10) || 1;
+      const m = (parseInt(parts[1], 10) || 1) - 1;
+      const y = parseInt(parts[2], 10) || new Date().getFullYear();
+      return new Date(y, m, 1);
+    }
+    return new Date();
+  });
+  const calendarRef = useRef<HTMLDivElement>(null);
+
+  // Close calendar popover on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
+        setIsCalendarOpen(false);
+      }
+    };
+    if (isCalendarOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCalendarOpen]);
 
   // Active item being updated
   const [activePlan, setActivePlan] = useState<MorningPlan | null>(null);
@@ -525,14 +558,50 @@ export const EveningReportModule: React.FC = () => {
     return Array.from(map.values());
   }, [combinedDataList, selectedDateFilter, searchTerm]);
 
-  // Unique Dates for filter dropdown
-  const uniqueDates = useMemo(() => {
-    const dates = new Set<string>();
+  // Map of meetingDate -> status indicators (Plan, Actual, Leave, Travel)
+  const dateStatusMap = useMemo(() => {
+    const map: Record<string, { hasPlan: boolean; hasActual: boolean; hasLeave: boolean; hasTravel: boolean; totalCount: number }> = {};
     combinedDataList.forEach(item => {
-      if (item.date) dates.add(item.date);
+      if (!item || !item.date) return;
+      if (!map[item.date]) {
+        map[item.date] = { hasPlan: false, hasActual: false, hasLeave: false, hasTravel: false, totalCount: 0 };
+      }
+      map[item.date].totalCount += 1;
+      const comp = (item.companyName || '').toLowerCase();
+      const remarks = (item.remarks || '').toLowerCase();
+
+      if (comp.includes('leave') || remarks.includes('leave')) {
+        map[item.date].hasLeave = true;
+      } else if (comp.includes('travel') || remarks.includes('travel')) {
+        map[item.date].hasTravel = true;
+      } else if (item.isUpdated) {
+        map[item.date].hasActual = true;
+      } else {
+        map[item.date].hasPlan = true;
+      }
     });
-    return Array.from(dates);
+    return map;
   }, [combinedDataList]);
+
+  const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const currentYear = calViewDate.getFullYear();
+  const currentMonth = calViewDate.getMonth();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const startDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
+
+  const handlePrevMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCalViewDate(new Date(currentYear, currentMonth - 1, 1));
+  };
+
+  const handleNextMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCalViewDate(new Date(currentYear, currentMonth + 1, 1));
+  };
 
   return (
     <div className="space-y-6">
@@ -572,23 +641,212 @@ export const EveningReportModule: React.FC = () => {
           />
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <select
-            value={selectedDateFilter}
-            onChange={(e) => setSelectedDateFilter(e.target.value)}
-            className="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-300 focus:outline-none focus:border-sky-500"
-          >
-            <option value={todayDate} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Today ({todayDate})</option>
-            <option value="ALL" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Meeting Dates</option>
-            {uniqueDates.filter(d => d !== todayDate).map(d => (
-              <option key={d} value={d} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{d}</option>
-            ))}
-          </select>
+        {/* Interactive Date Calendar Selector & Layout Switcher */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative" ref={calendarRef}>
+            <button
+              type="button"
+              onClick={() => setIsCalendarOpen(prev => !prev)}
+              className="flex items-center gap-2.5 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800/80 active:scale-95 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 transition-all cursor-pointer shadow-xs group"
+            >
+              <div className="w-6 h-6 rounded-lg bg-sky-500/10 dark:bg-sky-500/20 flex items-center justify-center text-sky-500 group-hover:scale-110 transition-transform">
+                <Calendar className="w-3.5 h-3.5" />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 font-medium">Date:</span>
+                <span className="text-sky-600 dark:text-sky-400 font-black">
+                  {selectedDateFilter === 'ALL'
+                    ? 'All Dates'
+                    : selectedDateFilter === todayDate
+                    ? `Today (${todayDate})`
+                    : selectedDateFilter}
+                </span>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                  isCalendarOpen ? 'rotate-180 text-sky-500' : ''
+                }`}
+              />
+            </button>
+
+            {/* Floating Calendar Popover matching reference design - Small Compact */}
+            <AnimatePresence>
+              {isCalendarOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                  transition={{ duration: 0.14, ease: 'easeOut' }}
+                  className="absolute right-0 mt-2 z-50 w-[275px] sm:w-[295px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3.5 text-slate-800 dark:text-slate-100 select-none backdrop-blur-2xl ring-1 ring-black/5 dark:ring-white/10"
+                >
+                  {/* Month Navigation Header */}
+                  <div className="flex items-center justify-between pb-2.5 px-1">
+                    <button
+                      type="button"
+                      onClick={handlePrevMonth}
+                      className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                      title="Previous Month"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight">
+                      {MONTH_NAMES[currentMonth]} {currentYear}
+                    </h4>
+
+                    <button
+                      type="button"
+                      onClick={handleNextMonth}
+                      className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                      title="Next Month"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Weekday Headers */}
+                  <div className="grid grid-cols-7 gap-0.5 text-center text-[9.5px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider pb-1.5">
+                    {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((d) => (
+                      <span key={d}>
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Days Grid */}
+                  <div className="grid grid-cols-7 gap-y-1.5 gap-x-0.5 pb-2.5">
+                    {/* Empty padding slots */}
+                    {Array.from({ length: startDayOfWeek }).map((_, i) => (
+                      <div key={`empty-${i}`} className="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5" />
+                    ))}
+
+                    {/* Day cells */}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const dayNum = i + 1;
+                      const dayStr = String(dayNum).padStart(2, '0');
+                      const monthStr = String(currentMonth + 1).padStart(2, '0');
+                      const dateKey = `${dayStr}-${monthStr}-${currentYear}`;
+                      const statusInfo = dateStatusMap[dateKey];
+                      const isSelected = selectedDateFilter === dateKey;
+                      const isToday = todayDate === dateKey;
+
+                      return (
+                        <button
+                          key={dateKey}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDateFilter(dateKey);
+                            setIsCalendarOpen(false);
+                          }}
+                          className={`w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 mx-auto rounded-full text-xs font-semibold flex flex-col items-center justify-center relative transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/30 scale-105 z-10'
+                              : isToday
+                              ? 'border-1.5 border-indigo-600 dark:border-indigo-400 text-slate-900 dark:text-white font-bold bg-white dark:bg-slate-900 shadow-xs'
+                              : statusInfo
+                              ? 'bg-slate-100/90 dark:bg-slate-800/70 text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700'
+                              : 'bg-slate-50 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                          title={`${dateKey}${statusInfo ? ` (${statusInfo.totalCount} entries)` : ''}`}
+                        >
+                          <span className="leading-none text-[11px] sm:text-xs">{dayNum}</span>
+
+                          {/* Status Dots underneath */}
+                          {statusInfo && !isSelected && (
+                            <div className="flex items-center gap-0.5 absolute bottom-0.5">
+                              {statusInfo.hasPlan && (
+                                <span className="w-1 h-1 rounded-full bg-amber-400 shadow-xs" title="Plan" />
+                              )}
+                              {statusInfo.hasActual && (
+                                <span className="w-1 h-1 rounded-full bg-emerald-500 shadow-xs" title="Actual" />
+                              )}
+                              {statusInfo.hasLeave && (
+                                <span className="w-1 h-1 rounded-full bg-rose-500 shadow-xs" title="Leave" />
+                              )}
+                              {statusInfo.hasTravel && (
+                                <span className="w-1 h-1 rounded-full bg-purple-500 shadow-xs" title="Travel" />
+                              )}
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Legend Footer matching reference image */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px]">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="w-2.5 h-2.5 rounded-full border-1.5 border-indigo-500 inline-block" />
+                        <span>Today</span>
+                      </span>
+                      <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                        <span>Plan</span>
+                      </span>
+                      <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                        <span>Actual</span>
+                      </span>
+                      <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block" />
+                        <span>Leave</span>
+                      </span>
+                      <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 inline-block" />
+                        <span>Travel</span>
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDateFilter('ALL');
+                        setIsCalendarOpen(false);
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer shrink-0 ml-1"
+                    >
+                      All
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* View Switcher: Grid vs List */}
+          <div className="flex items-center bg-slate-50 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setLayoutMode('grid')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                layoutMode === 'grid'
+                  ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLayoutMode('list')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                layoutMode === 'list'
+                  ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+              title="List View"
+            >
+              <List className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">List</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Person-Wise Cards Grid */}
+      {/* Person-Wise Cards Grid or Table List */}
       <div className="space-y-4">
         {groupedBySalesPerson.length === 0 ? (
           <div className="p-12 text-center rounded-2xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 space-y-2 shadow-xs">
@@ -596,7 +854,7 @@ export const EveningReportModule: React.FC = () => {
             <p className="text-slate-900 dark:text-slate-300 font-bold text-sm">No Sales Person entries found</p>
             <p className="text-xs text-slate-500">Create a Morning Plan or add an Evening entry to get started.</p>
           </div>
-        ) : (
+        ) : layoutMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {groupedBySalesPerson.map((group, groupIdx) => (
               <motion.div
@@ -609,12 +867,10 @@ export const EveningReportModule: React.FC = () => {
                 onClick={() => setSelectedGroupDetails(group)}
                 className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-sky-500/50 transition-all space-y-4 cursor-pointer hover:shadow-xl hover:shadow-sky-500/10 group relative overflow-hidden shadow-xs text-slate-900 dark:text-slate-100"
               >
-                {/* Person Header */}
+                {/* Person Header with DP / Avatar */}
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-600 font-bold">
-                      <User className="w-5 h-5" />
-                    </div>
+                    <UserAvatar name={group.salesPersonName} size="md" showRankBadge={false} />
                     <div>
                       <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-sky-600 transition-colors text-sm">
                         {group.salesPersonName}
@@ -677,6 +933,97 @@ export const EveningReportModule: React.FC = () => {
               </motion.div>
             ))}
           </div>
+        ) : (
+          /* Table List View for Evening Reports */
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <tr>
+                    <th className="p-3.5 min-w-[190px]">Sales Executive</th>
+                    <th className="p-3.5 min-w-[120px]">Follow Up Date</th>
+                    <th className="p-3.5 min-w-[130px]">Progress Status</th>
+                    <th className="p-3.5 min-w-[320px]">Planned Companies &amp; Status</th>
+                    <th className="p-3.5 text-right min-w-[140px]">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {groupedBySalesPerson.map((group, groupIdx) => (
+                    <tr
+                      key={`sp-list-row-${group.salesPersonName}-${group.meetingDate}-${groupIdx}`}
+                      onClick={() => setSelectedGroupDetails(group)}
+                      className="hover:bg-sky-50/40 dark:hover:bg-slate-800/60 transition-colors cursor-pointer group"
+                    >
+                      <td className="p-3.5">
+                        <div className="flex items-center gap-3">
+                          <UserAvatar name={group.salesPersonName} size="sm" showRankBadge={false} />
+                          <div>
+                            <p className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 transition-colors">
+                              {group.salesPersonName}
+                            </p>
+                            <span className="text-[10px] text-slate-400">Sales Executive</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3.5">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-[11px]">
+                          <Calendar className="w-3 h-3 text-slate-400" />
+                          <span>{group.meetingDate}</span>
+                        </span>
+                      </td>
+                      <td className="p-3.5">
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 ${
+                          group.completedCount === group.totalCompanies && group.totalCompanies > 0
+                            ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
+                            : 'bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-800/60'
+                        }`}>
+                          {group.completedCount} / {group.totalCompanies} Done
+                        </span>
+                      </td>
+                      <td className="p-3.5">
+                        <div className="flex flex-wrap items-center gap-1.5 max-w-md">
+                          {group.items.slice(0, 3).map((item, idx) => {
+                            const isLeave = item.companyName === 'On Leave';
+                            const isTravel = item.companyName === 'Travelling';
+                            const dotColor = isLeave ? 'bg-rose-500' : isTravel ? 'bg-purple-500' : item.isUpdated ? 'bg-emerald-500' : 'bg-amber-500';
+                            return (
+                              <span
+                                key={`list-tag-${item.uid}-${idx}`}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-medium border border-slate-200/80 dark:border-slate-700 truncate max-w-[160px]"
+                                title={item.companyName}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${dotColor} shrink-0`} />
+                                <span className="truncate">{item.companyName}</span>
+                              </span>
+                            );
+                          })}
+                          {group.items.length > 3 && (
+                            <span className="text-[10px] font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 px-1.5 py-0.5 rounded border border-sky-200 dark:border-sky-900">
+                              +{group.items.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedGroupDetails(group);
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 font-bold text-xs transition-colors cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Review &amp; Update</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
 
@@ -692,9 +1039,7 @@ export const EveningReportModule: React.FC = () => {
             >
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-600 font-bold">
-                    <User className="w-5 h-5" />
-                  </div>
+                  <UserAvatar name={selectedGroupDetails.salesPersonName} size="md" showRankBadge={false} />
                   <div>
                     <h3 className="font-bold text-lg text-slate-900 dark:text-white">
                       {selectedGroupDetails.salesPersonName}

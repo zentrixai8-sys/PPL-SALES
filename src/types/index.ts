@@ -197,3 +197,39 @@ export interface AdminNotice {
   isActive: boolean;
 }
 
+export type GrievanceCategory =
+  | 'Product Quality'
+  | 'Packaging / Damage'
+  | 'Delivery Delay'
+  | 'Billing / Scheme Mismatch'
+  | 'Shade / Color Variation'
+  | 'Material Replacement'
+  | 'Other';
+
+export type GrievancePriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+export type GrievanceStatus = 'Open' | 'In Review' | 'Closed';
+
+export interface GrievanceTicket {
+  id: string;
+  ticketNumber: string;
+  salesPersonId: string;
+  salesPersonName: string;
+  customerName: string;
+  contactPerson?: string;
+  contactNumber: string;
+  city?: string;
+  category: GrievanceCategory;
+  priority: GrievancePriority;
+  description: string;
+  images: string[];
+  status: GrievanceStatus;
+  createdAt: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+  resolvedById?: string;
+  resolutionRemarks?: string;
+  resolutionImages?: string[];
+  actionTaken?: string;
+}
+
+

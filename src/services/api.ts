@@ -9,6 +9,7 @@ import {
   CRMOrderRecord,
   ReferenceRecord,
   LeaveRecord,
+  GrievanceTicket,
 } from '../types';
 import {
   getIndianDateString,
@@ -251,17 +252,28 @@ export async function deleteUserFromSheet(id: string): Promise<boolean> {
  */
 export async function fetchSalesPersonsFromLoginSheet(): Promise<string[]> {
   const defaultSalesPersons = [
+    'Rohan Mehra',
+    'Amit Verma',
+    'Suresh Yadav',
+    'Manish Tiwari',
+    'Vikas Deshmukh',
+    'Sunil Chauhan',
+    'Gaurav Mishra',
+    'Nikhil Aggarwal',
+    'Rakesh Soni',
+    'Sanjay Jaiswal',
+    'Kunal Sen',
+    'Harish Rawat',
+    'Abhishek Gupta',
+    'Tarun Bhatt',
+    'Mayank Joshi',
+    'Arun Nayak',
+    'Prakash Rathore',
+    'Dinesh Rajput',
+    'Vinod Maurya',
+    'Sachin Bisen',
     'Atul Baghmar',
     'Pamendra Singh Rajput',
-    'Neha Garg',
-    'Pradeep Kumar',
-    'ADMIN',
-    'Anas Siddique',
-    'Vivek Yadav',
-    'Jaspreet Singh',
-    'Bhushan Singh Chouhan',
-    'Pankaj Kumar',
-    'Devi Naidu',
   ];
 
   if (!isSupabaseConfigured) return defaultSalesPersons;
@@ -1106,3 +1118,223 @@ export async function fetchCRMOrdersFromSheet(): Promise<CRMOrderRecord[]> {
 
   return [];
 }
+
+// =========================================================================
+// 9. CUSTOMER GRIEVANCE & SUPPORT TICKETS
+// =========================================================================
+
+const GRIEVANCE_STORAGE_KEY = 'pppl_customer_grievance_tickets';
+
+const INITIAL_DEMO_TICKETS: GrievanceTicket[] = [
+  {
+    id: 'tck-1',
+    ticketNumber: 'TCK-2026-081',
+    salesPersonId: 'sales01',
+    salesPersonName: 'Deepak Sahu',
+    customerName: 'Shree Balaji Hardware & Paints',
+    contactPerson: 'Ramesh Balaji',
+    contactNumber: '9826011223',
+    city: 'Indore',
+    category: 'Packaging / Damage',
+    priority: 'High',
+    description: 'Received 5 buckets of 20L WeatherShield Premium with cracked lids during transport transit. Leakage occurred in 2 buckets.',
+    images: [
+      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=600&q=80',
+    ],
+    status: 'Closed',
+    createdAt: '22-09-2026 11:30 AM',
+    resolvedAt: '23-09-2026 10:15 AM',
+    resolvedBy: 'Administrator',
+    resolvedById: 'admin01',
+    resolutionRemarks: 'Replacement dispatch initiated via Indore central depot. Invoice credit adjusted.',
+    resolutionImages: [
+      'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80',
+    ],
+    actionTaken: 'Replacement 5 Buckets Dispatched + Credit Note #CN-9923',
+  },
+  {
+    id: 'tck-2',
+    ticketNumber: 'TCK-2026-082',
+    salesPersonId: 'sales02',
+    salesPersonName: 'Amit Verma',
+    customerName: 'Mahalaxmi Paints & Traders',
+    contactPerson: 'Suresh Agarwal',
+    contactNumber: '9893044112',
+    city: 'Bhopal',
+    category: 'Shade / Color Variation',
+    priority: 'Urgent',
+    description: 'Customer reports slight shade discrepancy in Royal Lustre Base shade #PL-402 between Batch B-08 and Batch B-09.',
+    images: [
+      'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=600&q=80',
+    ],
+    status: 'Open',
+    createdAt: '23-09-2026 09:45 AM',
+  },
+];
+
+/**
+ * Fetch all grievance tickets from Supabase or localStorage fallback.
+ */
+export async function fetchGrievanceTicketsFromSheet(): Promise<GrievanceTicket[]> {
+  try {
+    if (isSupabaseConfigured) {
+      const { data, error } = await supabase
+        .from('grievance_tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && Array.isArray(data) && data.length > 0) {
+        return data.map((d: any) => ({
+          id: String(d.id),
+          ticketNumber: d.ticket_number || `TCK-${String(d.id).slice(-4)}`,
+          salesPersonId: d.sales_person_id || '',
+          salesPersonName: d.sales_person_name || '',
+          customerName: d.customer_name || '',
+          contactPerson: d.contact_person || '',
+          contactNumber: d.contact_number || '',
+          city: d.city || '',
+          category: d.category || 'Product Quality',
+          priority: d.priority || 'Medium',
+          description: d.description || '',
+          images: Array.isArray(d.images) ? d.images : (typeof d.images === 'string' && d.images ? JSON.parse(d.images) : []),
+          status: d.status || 'Open',
+          createdAt: d.created_at_formatted || d.created_at || '',
+          resolvedAt: d.resolved_at || undefined,
+          resolvedBy: d.resolved_by || undefined,
+          resolvedById: d.resolved_by_id || undefined,
+          resolutionRemarks: d.resolution_remarks || undefined,
+          resolutionImages: Array.isArray(d.resolution_images) ? d.resolution_images : (typeof d.resolution_images === 'string' && d.resolution_images ? JSON.parse(d.resolution_images) : []),
+          actionTaken: d.action_taken || undefined,
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase grievance fetch warning, using local cached tickets:', err);
+  }
+
+  // LocalStorage fallback
+  try {
+    const cached = localStorage.getItem(GRIEVANCE_STORAGE_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (_) {}
+
+  localStorage.setItem(GRIEVANCE_STORAGE_KEY, JSON.stringify(INITIAL_DEMO_TICKETS));
+  return INITIAL_DEMO_TICKETS;
+}
+
+/**
+ * Save new Grievance Ticket raised by Sales Person
+ */
+export async function saveGrievanceTicketToSheet(
+  ticketData: Omit<GrievanceTicket, 'id' | 'ticketNumber' | 'createdAt' | 'status'>
+): Promise<GrievanceTicket> {
+  const newId = `tck-${Date.now()}`;
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  const ticketNumber = `TCK-${new Date().getFullYear()}-${randomNum}`;
+  const now = new Date();
+  const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+
+  const newTicket: GrievanceTicket = {
+    ...ticketData,
+    id: newId,
+    ticketNumber,
+    status: 'Open',
+    createdAt: formattedDate,
+  };
+
+  // Try save to Supabase
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.from('grievance_tickets').insert([
+        {
+          ticket_number: ticketNumber,
+          sales_person_id: newTicket.salesPersonId,
+          sales_person_name: newTicket.salesPersonName,
+          customer_name: newTicket.customerName,
+          contact_person: newTicket.contactPerson || '',
+          contact_number: newTicket.contactNumber,
+          city: newTicket.city || '',
+          category: newTicket.category,
+          priority: newTicket.priority,
+          description: newTicket.description,
+          images: newTicket.images,
+          status: 'Open',
+          created_at_formatted: formattedDate,
+        },
+      ]);
+    } catch (err) {
+      console.warn('Supabase insert grievance error:', err);
+    }
+  }
+
+  // Update localStorage
+  try {
+    const current = await fetchGrievanceTicketsFromSheet();
+    const updated = [newTicket, ...current];
+    localStorage.setItem(GRIEVANCE_STORAGE_KEY, JSON.stringify(updated));
+  } catch (_) {}
+
+  return newTicket;
+}
+
+/**
+ * Resolve & Close Grievance Ticket with multiple resolution proof images and remarks (Manager / Admin Action)
+ */
+export async function resolveGrievanceTicketInSheet(
+  ticketId: string,
+  resolution: {
+    remarks: string;
+    images: string[];
+    resolvedBy: string;
+    resolvedById: string;
+    actionTaken?: string;
+  }
+): Promise<GrievanceTicket | null> {
+  const now = new Date();
+  const resolvedAt = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()} ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+
+  // Try Supabase update
+  if (isSupabaseConfigured) {
+    try {
+      await supabase
+        .from('grievance_tickets')
+        .update({
+          status: 'Closed',
+          resolved_at: resolvedAt,
+          resolved_by: resolution.resolvedBy,
+          resolved_by_id: resolution.resolvedById,
+          resolution_remarks: resolution.remarks,
+          resolution_images: resolution.images,
+          action_taken: resolution.actionTaken || 'Resolved & Closed',
+        })
+        .eq('ticket_number', ticketId);
+    } catch (err) {
+      console.warn('Supabase resolve ticket error:', err);
+    }
+  }
+
+  // Update localStorage
+  try {
+    const current = await fetchGrievanceTicketsFromSheet();
+    const targetIdx = current.findIndex(t => t.id === ticketId || t.ticketNumber === ticketId);
+    if (targetIdx !== -1) {
+      current[targetIdx] = {
+        ...current[targetIdx],
+        status: 'Closed',
+        resolvedAt,
+        resolvedBy: resolution.resolvedBy,
+        resolvedById: resolution.resolvedById,
+        resolutionRemarks: resolution.remarks,
+        resolutionImages: resolution.images,
+        actionTaken: resolution.actionTaken || 'Resolved & Closed',
+      };
+      localStorage.setItem(GRIEVANCE_STORAGE_KEY, JSON.stringify(current));
+      return current[targetIdx];
+    }
+  } catch (_) {}
+
+  return null;
+}
+

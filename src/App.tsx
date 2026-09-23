@@ -5,6 +5,10 @@ import { DashboardContainer } from './components/dashboard/DashboardContainer';
 import { ToastContainer } from './components/common/Toast';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { motion } from 'motion/react';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { App as CapApp } from '@capacitor/app';
 
 const BrandLoadingScreen: React.FC = () => {
   return (
@@ -90,7 +94,37 @@ const BrandLoadingScreen: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { authState } = useAuth();
+  const { authState, themeMode } = useAuth();
+
+  React.useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      // Configure Native Status Bar for Light / Dark mode
+      if (themeMode === 'light') {
+        StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
+      } else {
+        StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: '#0b1329' }).catch(() => {});
+      }
+      StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+      
+      // Hide Splash Screen after app is mounted
+      SplashScreen.hide().catch(() => {});
+
+      // Handle Android Hardware Back Button
+      const backListener = CapApp.addListener('backButton', ({ canGoBack }) => {
+        if (!canGoBack) {
+          CapApp.exitApp();
+        } else {
+          window.history.back();
+        }
+      });
+
+      return () => {
+        backListener.then(l => l.remove()).catch(() => {});
+      };
+    }
+  }, [themeMode]);
 
   if (authState.isLoading) {
     return <BrandLoadingScreen />;

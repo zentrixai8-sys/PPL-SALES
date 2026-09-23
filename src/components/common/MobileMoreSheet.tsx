@@ -18,7 +18,8 @@ import {
   ChevronRight,
   ShieldCheck,
   CheckCircle2,
-  Grid
+  Grid,
+  ShieldAlert
 } from 'lucide-react';
 
 interface MobileMoreSheetProps {
@@ -59,6 +60,17 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
       borderColor: 'border-purple-500/30',
       badge: 'Leads',
       badgeColor: 'bg-purple-500/15 text-purple-600 dark:text-purple-300 border-purple-500/30'
+    },
+    {
+      id: 'grievances' as NavigationTab,
+      label: 'Customer Grievances',
+      desc: 'Raise & resolve support tickets',
+      icon: ShieldAlert,
+      gradient: 'from-amber-500/20 to-rose-500/20',
+      iconColor: 'text-amber-600 dark:text-amber-400',
+      borderColor: 'border-amber-500/30',
+      badge: 'Tickets',
+      badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30'
     },
     {
       id: 'reports' as NavigationTab,

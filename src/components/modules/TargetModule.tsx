@@ -89,17 +89,28 @@ export const TargetModule: React.FC = () => {
 
   // Salespersons list fetched from Login sheet Column C (USER NAME)
   const [salesPersonsList, setSalesPersonsList] = useState<string[]>([
+    'Rohan Mehra',
+    'Amit Verma',
+    'Suresh Yadav',
+    'Manish Tiwari',
+    'Vikas Deshmukh',
+    'Sunil Chauhan',
+    'Gaurav Mishra',
+    'Nikhil Aggarwal',
+    'Rakesh Soni',
+    'Sanjay Jaiswal',
+    'Kunal Sen',
+    'Harish Rawat',
+    'Abhishek Gupta',
+    'Tarun Bhatt',
+    'Mayank Joshi',
+    'Arun Nayak',
+    'Prakash Rathore',
+    'Dinesh Rajput',
+    'Vinod Maurya',
+    'Sachin Bisen',
     'Atul Baghmar',
     'Pamendra Singh Rajput',
-    'Neha Garg',
-    'Pradeep Kumar',
-    'ADMIN',
-    'Anas Siddique',
-    'Vivek Yadav',
-    'Jaspreet Singh',
-    'Bhushan Singh Chouhan',
-    'Pankaj Kumar',
-    'Devi Naidu',
   ]);
 
   // Form states for assigning target

@@ -1,0 +1,1654 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import {
+  GrievanceTicket,
+  GrievanceCategory,
+  GrievancePriority,
+  GrievanceStatus,
+} from '../../types';
+import {
+  fetchGrievanceTicketsFromSheet,
+  saveGrievanceTicketToSheet,
+  resolveGrievanceTicketInSheet,
+} from '../../services/api';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Filter,
+  Image as ImageIcon,
+  Plus,
+  RefreshCw,
+  Search,
+  Upload,
+  X,
+  ShieldAlert,
+  Building2,
+  Phone,
+  MapPin,
+  FileText,
+  User,
+  CheckCircle,
+  Eye,
+  ChevronRight,
+  ChevronDown,
+  ExternalLink,
+  ShieldCheck,
+  Sparkles,
+  ArrowRight,
+  HelpCircle,
+  Maximize2,
+  List,
+  LayoutGrid
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+
+const CATEGORIES: GrievanceCategory[] = [
+  'Product Quality',
+  'Packaging / Damage',
+  'Delivery Delay',
+  'Billing / Scheme Mismatch',
+  'Shade / Color Variation',
+  'Material Replacement',
+  'Other',
+];
+
+const PRIORITIES: GrievancePriority[] = ['Low', 'Medium', 'High', 'Urgent'];
+
+export const GrievanceModule: React.FC = () => {
+  const { authState, showToast } = useAuth();
+  const user = authState.user;
+  const isAdminOrManager = user?.role === 'Admin' || user?.role === 'Manager';
+
+  const [tickets, setTickets] = useState<GrievanceTicket[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // View Mode: 'list' (default) or 'grid'
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [expandedTicketIds, setExpandedTicketIds] = useState<Record<string, boolean>>({});
+
+  const toggleTicketExpand = (ticketId: string) => {
+    setExpandedTicketIds(prev => ({
+      ...prev,
+      [ticketId]: !prev[ticketId]
+    }));
+  };
+
+  // Filters & Search
+  const [activeTab, setActiveTab] = useState<'All' | GrievanceStatus>('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [priorityFilter, setPriorityFilter] = useState<string>('All');
+  const [salesPersonFilter, setSalesPersonFilter] = useState<string>('All');
+
+  // Modals
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+  const [selectedTicketForResolution, setSelectedTicketForResolution] = useState<GrievanceTicket | null>(null);
+  const [selectedTicketForDetails, setSelectedTicketForDetails] = useState<GrievanceTicket | null>(null);
+  const [activeLightboxImage, setActiveLightboxImage] = useState<string | null>(null);
+
+  // Create Form State
+  const [formCustomerName, setFormCustomerName] = useState('');
+  const [formContactPerson, setFormContactPerson] = useState('');
+  const [formContactNumber, setFormContactNumber] = useState('');
+  const [formCity, setFormCity] = useState('');
+  const [formCategory, setFormCategory] = useState<GrievanceCategory>('Product Quality');
+  const [formPriority, setFormPriority] = useState<GrievancePriority>('Medium');
+  const [formDescription, setFormDescription] = useState('');
+  const [formImages, setFormImages] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Resolve Form State
+  const [resolveRemarks, setResolveRemarks] = useState('');
+  const [resolveActionTaken, setResolveActionTaken] = useState('');
+  const [resolveImages, setResolveImages] = useState<string[]>([]);
+  const [isResolving, setIsResolving] = useState(false);
+
+  // Load Tickets
+  const loadTickets = async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
+    else setIsLoading(true);
+
+    try {
+      const data = await fetchGrievanceTicketsFromSheet();
+      setTickets(data);
+      if (isManual) {
+        showToast('success', 'Tickets Updated', 'Latest customer grievance tickets loaded.');
+      }
+    } catch (err) {
+      console.error('Error loading tickets:', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTickets();
+  }, []);
+
+  // Helper for multiple file upload to base64
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setImages: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        showToast('error', 'Invalid File', 'Only image files are supported.');
+        return;
+      }
+      if (file.size > 8 * 1024 * 1024) {
+        showToast('error', 'File Too Large', 'Please select images under 8MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const result = uploadEvent.target?.result as string;
+        if (result) {
+          setImages(prev => [...prev, result]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = '';
+  };
+
+  // Submit New Grievance Ticket
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formCustomerName.trim() || !formContactNumber.trim() || !formDescription.trim()) {
+      showToast('error', 'Required Fields', 'Please fill in Customer Name, Contact Number, and Description.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const created = await saveGrievanceTicketToSheet({
+        salesPersonId: user?.id || 'sales01',
+        salesPersonName: user?.userName || 'Sales Executive',
+        customerName: formCustomerName.trim(),
+        contactPerson: formContactPerson.trim(),
+        contactNumber: formContactNumber.trim(),
+        city: formCity.trim(),
+        category: formCategory,
+        priority: formPriority,
+        description: formDescription.trim(),
+        images: formImages,
+      });
+
+      setTickets(prev => [created, ...prev]);
+      showToast('success', 'Ticket Raised Successfully', `Grievance Ticket #${created.ticketNumber} registered!`);
+
+      // Reset form
+      setFormCustomerName('');
+      setFormContactPerson('');
+      setFormContactNumber('');
+      setFormCity('');
+      setFormDescription('');
+      setFormImages([]);
+      setIsCreateModalOpen(false);
+    } catch (err) {
+      console.error('Create ticket error:', err);
+      showToast('error', 'Submission Failed', 'Could not save ticket. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Submit Ticket Resolution
+  const handleResolveTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTicketForResolution) return;
+    if (!resolveRemarks.trim()) {
+      showToast('error', 'Remarks Required', 'Please enter resolution remarks.');
+      return;
+    }
+
+    setIsResolving(true);
+    try {
+      const resolved = await resolveGrievanceTicketInSheet(selectedTicketForResolution.id, {
+        remarks: resolveRemarks.trim(),
+        actionTaken: resolveActionTaken.trim() || 'Resolved & Closed',
+        images: resolveImages,
+        resolvedBy: user?.userName || 'Administrator',
+        resolvedById: user?.id || 'admin01',
+      });
+
+      if (resolved) {
+        setTickets(prev =>
+          prev.map(t => (t.id === resolved.id || t.ticketNumber === resolved.ticketNumber ? resolved : t))
+        );
+        showToast('success', 'Ticket Resolved & Closed', `Ticket #${resolved.ticketNumber} is now marked as Closed.`);
+      }
+
+      setIsResolveModalOpen(false);
+      setSelectedTicketForResolution(null);
+      setResolveRemarks('');
+      setResolveActionTaken('');
+      setResolveImages([]);
+    } catch (err) {
+      console.error('Resolve ticket error:', err);
+      showToast('error', 'Action Failed', 'Could not close ticket. Please try again.');
+    } finally {
+      setIsResolving(false);
+    }
+  };
+
+  // Unique Sales Persons for filtering
+  const salesPersonsList = Array.from(
+    new Set(tickets.map(t => t.salesPersonName).filter(Boolean))
+  ).sort();
+
+  // Filtered Tickets
+  const filteredTickets = tickets.filter(t => {
+    // If not Admin/Manager, show tickets raised by this salesperson (or all if team sharing)
+    const matchesUser = isAdminOrManager ? true : (t.salesPersonId === user?.id || t.salesPersonName === user?.userName || true);
+    
+    const matchesTab = activeTab === 'All' ? true : t.status === activeTab;
+    const matchesCategory = categoryFilter === 'All' ? true : t.category === categoryFilter;
+    const matchesPriority = priorityFilter === 'All' ? true : t.priority === priorityFilter;
+    const matchesSalesPerson = salesPersonFilter === 'All' ? true : t.salesPersonName === salesPersonFilter;
+
+    const q = searchTerm.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      t.ticketNumber.toLowerCase().includes(q) ||
+      t.customerName.toLowerCase().includes(q) ||
+      t.salesPersonName.toLowerCase().includes(q) ||
+      t.contactNumber.includes(q) ||
+      t.description.toLowerCase().includes(q) ||
+      (t.city || '').toLowerCase().includes(q);
+
+    return matchesUser && matchesTab && matchesCategory && matchesPriority && matchesSalesPerson && matchesSearch;
+  });
+
+  // KPI Metrics
+  const totalCount = tickets.length;
+  const openCount = tickets.filter(t => t.status === 'Open').length;
+  const inReviewCount = tickets.filter(t => t.status === 'In Review').length;
+  const closedCount = tickets.filter(t => t.status === 'Closed').length;
+  const resolutionRate = totalCount > 0 ? Math.round((closedCount / totalCount) * 100) : 100;
+
+  return (
+    <div className="space-y-6">
+      {/* Top Banner & Action */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white shadow-md border border-slate-700/70 py-3.5 px-4 sm:px-5 transition-all">
+        {/* Subtle English luxury accent glow */}
+        <div className="absolute right-0 top-0 w-60 h-full bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute left-1/4 bottom-0 w-48 h-full bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="space-y-0.5 max-w-2xl">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="p-2 rounded-xl bg-slate-800 text-sky-400 border border-slate-700/80 shadow-xs flex items-center justify-center">
+                <ShieldAlert className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+              </div>
+              <h1 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+                Customer Grievance &amp; Ticket Center
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>LIVE HELPDESK</span>
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 font-normal leading-relaxed pl-0.5">
+              Register dealer &amp; party product issues with multi-image evidence. Managers review, resolve, and close tickets with resolution proof.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0 self-start md:self-center pt-1 md:pt-0">
+            <button
+              type="button"
+              onClick={() => loadTickets(true)}
+              disabled={isRefreshing}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-800/90 text-slate-200 font-semibold text-xs flex items-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow-xs"
+              title="Refresh Tickets"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-sky-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-blue-600/30 hover:shadow-blue-600/40 transition-all cursor-pointer border border-blue-400/30"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Raise Grievance Ticket</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Stats Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4.5">
+        {/* Total Tickets */}
+        <div className="relative overflow-hidden p-4.5 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/30 border border-blue-200/90 dark:border-blue-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 to-indigo-600" />
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-extrabold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Total Tickets</p>
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-1">{totalCount}</h3>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-base shadow-md shadow-blue-500/30 group-hover:scale-110 transition-transform">
+              #
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 font-medium">All logged customer issues</p>
+        </div>
+
+        {/* Open / Pending */}
+        <div className="relative overflow-hidden p-4.5 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/30 border border-amber-200/90 dark:border-amber-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 to-orange-500" />
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Open / Pending</p>
+              <h3 className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">{openCount}</h3>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/30 group-hover:scale-110 transition-transform">
+              <Clock className="w-5 h-5 stroke-[2.5]" />
+            </div>
+          </div>
+          <p className="text-[11px] text-amber-700/90 dark:text-amber-400/90 mt-2 font-bold">
+            {openCount > 0 ? `Action required on ${openCount} issue${openCount > 1 ? 's' : ''}` : 'No pending tickets'}
+          </p>
+        </div>
+
+        {/* Resolved & Closed */}
+        <div className="relative overflow-hidden p-4.5 sm:p-5 rounded-3xl bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/30 border border-emerald-200/90 dark:border-emerald-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500" />
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Resolved &amp; Closed</p>
+              <h3 className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{closedCount}</h3>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+              <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+            </div>
+          </div>
+          <p className="text-[11px] text-emerald-700/90 dark:text-emerald-400/90 mt-2 font-bold">Successfully closed with proof</p>
+        </div>
+
+        {/* Resolution Rate */}
+        <div className="relative overflow-hidden p-4.5 sm:p-5 rounded-3xl bg-gradient-to-br from-purple-50/80 via-white to-pink-50/50 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/30 border border-purple-200/90 dark:border-purple-900/60 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 to-pink-500" />
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-extrabold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Resolution Rate</p>
+              <h3 className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400 mt-1">{resolutionRate}%</h3>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 text-white flex items-center justify-center font-black text-base shadow-md shadow-purple-500/30 group-hover:scale-110 transition-transform">
+              %
+            </div>
+          </div>
+          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-2.5">
+            <div
+              className="bg-gradient-to-r from-purple-500 via-fuchsia-500 to-pink-500 h-full rounded-full transition-all duration-500"
+              style={{ width: `${resolutionRate}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter & Search Bar with View Switcher */}
+      <div className="p-4 sm:p-4.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+        {/* Top Filter Row: Status Tabs + View Toggle */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 slim-scrollbar">
+            {(['All', 'Open', 'Closed'] as const).map(tab => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  activeTab === tab
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                <span>{tab === 'All' ? 'All Tickets' : tab === 'Open' ? 'Open Issues' : 'Closed / Settled'}</span>
+                <span
+                  className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                    activeTab === tab ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  {tab === 'All' ? totalCount : tab === 'Open' ? openCount : closedCount}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* View Switcher Toggle: List vs Grid */}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 shrink-0">
+            <button
+              type="button"
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                viewMode === 'list'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-sky-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+              title="List View"
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>List View</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-sky-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+              title="Grid View"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Grid View</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Inputs */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2.5 pt-0.5">
+          <div className="lg:col-span-4 relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search by customer, ticket #, mobile, city..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-9.5 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            />
+          </div>
+
+          <div className="lg:col-span-3">
+            <select
+              value={salesPersonFilter}
+              onChange={e => setSalesPersonFilter(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            >
+              <option value="All">All Sales Persons</option>
+              {salesPersonsList.map(sp => (
+                <option key={sp} value={sp}>{sp}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="lg:col-span-3">
+            <select
+              value={categoryFilter}
+              onChange={e => setCategoryFilter(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            >
+              <option value="All">All Categories</option>
+              {CATEGORIES.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="lg:col-span-2">
+            <select
+              value={priorityFilter}
+              onChange={e => setPriorityFilter(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            >
+              <option value="All">All Priorities</option>
+              {PRIORITIES.map(p => (
+                <option key={p} value={p}>{p} Priority</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Ticket Listing */}
+      {isLoading ? (
+        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Loading customer grievance tickets...</p>
+        </div>
+      ) : filteredTickets.length === 0 ? (
+        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 flex flex-col items-center justify-center gap-3">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-500 flex items-center justify-center">
+            <HelpCircle className="w-7 h-7" />
+          </div>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Grievance Tickets Found</h4>
+          <p className="text-xs text-slate-400 max-w-sm">
+            {searchTerm || categoryFilter !== 'All' || priorityFilter !== 'All' || salesPersonFilter !== 'All'
+              ? 'No tickets match the selected filters. Try clearing search filters.'
+              : 'All customer grievance queries are resolved. Click "Raise Grievance Ticket" to register a new one.'}
+          </p>
+        </div>
+      ) : viewMode === 'list' ? (
+        /* ================= LIST VIEW (DEFAULT: INTERACTIVE ACCORDION ROWS) ================= */
+        <div className="space-y-3">
+          {filteredTickets.map(ticket => {
+            const isClosed = ticket.status === 'Closed';
+            const isUrgent = ticket.priority === 'Urgent';
+            const isHigh = ticket.priority === 'High';
+            const isExpanded = !!expandedTicketIds[ticket.id];
+
+            return (
+              <div
+                key={ticket.id}
+                className={`rounded-2xl bg-white dark:bg-slate-900 border transition-all duration-200 overflow-hidden shadow-xs hover:shadow-md ${
+                  isClosed
+                    ? 'border-emerald-500/30'
+                    : isUrgent
+                    ? 'border-rose-500/40'
+                    : 'border-slate-200/90 dark:border-slate-800'
+                }`}
+              >
+                {/* Clickable Header Row */}
+                <div
+                  onClick={() => setSelectedTicketForDetails(ticket)}
+                  className={`p-3.5 sm:p-4.5 cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors select-none ${
+                    isExpanded ? 'bg-slate-50/70 dark:bg-slate-800/40' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/20'
+                  }`}
+                >
+                  {/* Left: Indicator + Ticket # + Customer Name */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTicketForDetails(ticket);
+                      }}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white text-slate-500 dark:text-slate-400 transition-colors shrink-0 cursor-pointer"
+                      title="View Ticket Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-bold text-xs text-blue-600 dark:text-sky-400 px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/60">
+                          {ticket.ticketNumber}
+                        </span>
+
+                        <span
+                          className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider border ${
+                            ticket.priority === 'Urgent'
+                              ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800'
+                              : ticket.priority === 'High'
+                              ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                              : ticket.priority === 'Medium'
+                              ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                          }`}
+                        >
+                          {ticket.priority}
+                        </span>
+
+                        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/60 dark:border-indigo-800/60">
+                          {ticket.category}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-black text-slate-900 dark:text-white truncate hover:text-blue-600 dark:hover:text-sky-400 transition-colors">
+                          {ticket.customerName}
+                        </h4>
+                        {ticket.city && (
+                          <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-0.5 font-medium">
+                            <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                            <span>{ticket.city}</span>
+                          </span>
+                        )}
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded-md">
+                          <User className="w-3 h-3 text-indigo-500" />
+                          <span>Raised by: <b className="text-slate-700 dark:text-slate-200">{ticket.salesPersonName}</b></span>
+                        </span>
+                        {isClosed && ticket.resolvedBy && (
+                          <span className="text-[11px] text-emerald-700 dark:text-emerald-300 flex items-center gap-1 font-medium bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200/50 dark:border-emerald-800/40">
+                            <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                            <span>Closed by: <b>{ticket.resolvedBy}</b></span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Images count + Status badge + Time + Expand prompt */}
+                  <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center flex-wrap">
+                    {ticket.images && ticket.images.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                        <span>{ticket.images.length} Evidence</span>
+                      </span>
+                    )}
+
+                    <span
+                      className={`inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-full border ${
+                        isClosed
+                          ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                          : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                      }`}
+                    >
+                      {isClosed ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                      <span>{isClosed ? 'RESOLVED' : 'OPEN'}</span>
+                    </span>
+
+                    <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
+                      {ticket.createdAt}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTicketForDetails(ticket);
+                      }}
+                      className="text-xs font-bold text-blue-600 dark:text-sky-400 hover:underline px-1 py-0.5 cursor-pointer flex items-center gap-1"
+                    >
+                      <span>View Details</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Animated Accordion Details */}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      className="overflow-hidden border-t border-slate-100 dark:border-slate-800"
+                    >
+                      <div className="p-4 sm:p-5 space-y-4 bg-slate-50/40 dark:bg-slate-900/40">
+                        {/* 3-Column Info Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="p-3 rounded-xl bg-white dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 flex items-start gap-2.5">
+                            <Building2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase">Customer / Party Name</p>
+                              <p className="text-sm font-bold text-slate-900 dark:text-white">{ticket.customerName}</p>
+                              {ticket.contactPerson && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Attn: {ticket.contactPerson}</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-white dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 flex items-start gap-2.5">
+                            <Phone className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase">Contact &amp; Location</p>
+                              <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{ticket.contactNumber}</p>
+                              {ticket.city && (
+                                <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                                  <MapPin className="w-3 h-3 text-rose-500" />
+                                  <span>{ticket.city}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-white dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 flex items-start gap-2.5">
+                            <User className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase">Raised By</p>
+                              <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{ticket.salesPersonName}</p>
+                              <p className="text-[10px] font-mono text-slate-400">{ticket.salesPersonId}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Issue Description */}
+                        <div className="p-4 rounded-xl bg-white dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 space-y-1">
+                          <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Issue Description:</p>
+                          <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal">
+                            {ticket.description}
+                          </p>
+                        </div>
+
+                        {/* Issue Photos Gallery */}
+                        {ticket.images && ticket.images.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                              <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                              <span>Attached Issue Evidence ({ticket.images.length} Image{ticket.images.length > 1 ? 's' : ''}):</span>
+                            </p>
+                            <div className="flex items-center gap-3 flex-wrap">
+                              {ticket.images.map((img, idx) => (
+                                <div
+                                  key={idx}
+                                  onClick={() => setActiveLightboxImage(img)}
+                                  className="relative group w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 cursor-pointer shadow-sm hover:border-blue-500 transition-all shrink-0"
+                                >
+                                  <img src={img} alt={`Issue ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                    <Maximize2 className="w-4 h-4" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Resolution Details Box (When Closed) */}
+                        {isClosed && (
+                          <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 space-y-2.5">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+                                <ShieldCheck className="w-4 h-4" />
+                                <span>Resolution Details · Closed by {ticket.resolvedBy || 'Administrator'}</span>
+                              </div>
+                              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">
+                                {ticket.resolvedAt}
+                              </span>
+                            </div>
+
+                            {ticket.actionTaken && (
+                              <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                                Action: <span className="font-medium text-slate-700 dark:text-slate-200">{ticket.actionTaken}</span>
+                              </p>
+                            )}
+
+                            {ticket.resolutionRemarks && (
+                              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                                <span className="font-bold text-slate-900 dark:text-white">Closing Remarks: </span>
+                                {ticket.resolutionRemarks}
+                              </p>
+                            )}
+
+                            {/* Resolution Proof Images */}
+                            {ticket.resolutionImages && ticket.resolutionImages.length > 0 && (
+                              <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/60 space-y-1.5">
+                                <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  <span>Resolution Proof Attachments ({ticket.resolutionImages.length}):</span>
+                                </p>
+                                <div className="flex items-center gap-2.5 flex-wrap">
+                                  {ticket.resolutionImages.map((img, idx) => (
+                                    <div
+                                      key={idx}
+                                      onClick={() => setActiveLightboxImage(img)}
+                                      className="relative group w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-emerald-300 dark:border-emerald-700 cursor-pointer shadow-sm hover:border-emerald-500 transition-all shrink-0"
+                                    >
+                                      <img src={img} alt={`Resolution ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                        <Maximize2 className="w-4 h-4" />
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Action Buttons for Managers/Admins */}
+                        {!isClosed && isAdminOrManager && (
+                          <div className="pt-2 flex items-center justify-end">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTicketForResolution(ticket);
+                                setIsResolveModalOpen(true);
+                              }}
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>Resolve &amp; Close Ticket</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* ================= GRID / CARD VIEW ================= */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredTickets.map(ticket => {
+            const isClosed = ticket.status === 'Closed';
+            const isUrgent = ticket.priority === 'Urgent';
+            const isHigh = ticket.priority === 'High';
+
+            return (
+              <motion.div
+                key={ticket.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => setSelectedTicketForDetails(ticket)}
+                className={`rounded-3xl bg-white dark:bg-slate-900 border transition-all p-4 sm:p-5 relative overflow-hidden shadow-xs hover:shadow-md flex flex-col justify-between cursor-pointer ${
+                  isClosed
+                    ? 'border-emerald-500/30 hover:border-emerald-500/60'
+                    : isUrgent
+                    ? 'border-rose-500/40 hover:border-rose-500/70'
+                    : 'border-slate-200/80 dark:border-slate-800 hover:border-blue-500/50'
+                }`}
+              >
+                <div>
+                  {/* Header Bar of Card */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono font-bold text-xs text-blue-600 dark:text-sky-400 px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/60">
+                        {ticket.ticketNumber}
+                      </span>
+
+                      <span
+                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-lg uppercase tracking-wider border ${
+                          ticket.priority === 'Urgent'
+                            ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800'
+                            : ticket.priority === 'High'
+                            ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                            : ticket.priority === 'Medium'
+                            ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                        }`}
+                      >
+                        {ticket.priority} Priority
+                      </span>
+
+                      <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/60 dark:border-indigo-800/60">
+                        {ticket.category}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1 text-xs font-black px-3 py-1 rounded-full border ${
+                          isClosed
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                            : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                        }`}
+                      >
+                        {isClosed ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                        <span>{isClosed ? 'RESOLVED' : 'OPEN'}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Main Body */}
+                  <div className="py-3.5 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div className="flex items-start gap-2">
+                        <Building2 className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Customer</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-sky-400 transition-colors">{ticket.customerName}</p>
+                          {ticket.contactPerson && (
+                            <p className="text-xs text-slate-500">Attn: {ticket.contactPerson}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-2">
+                        <Phone className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Contact &amp; City</p>
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{ticket.contactNumber}</p>
+                          {ticket.city && (
+                            <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 text-rose-500" />
+                              <span>{ticket.city}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-2">
+                        <User className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase">Raised By</p>
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{ticket.salesPersonName}</p>
+                          {isClosed && ticket.resolvedBy && (
+                            <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-0.5">
+                              <ShieldCheck className="w-3 h-3 text-emerald-500 shrink-0" />
+                              <span>Closed: {ticket.resolvedBy}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Problem Description */}
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Issue:</p>
+                      <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed line-clamp-3">
+                        {ticket.description}
+                      </p>
+                    </div>
+
+                    {/* Issue Images */}
+                    {ticket.images && ticket.images.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                          <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Attached Evidence ({ticket.images.length}):</span>
+                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {ticket.images.map((img, idx) => (
+                            <div
+                              key={idx}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveLightboxImage(img);
+                              }}
+                              className="relative group w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-blue-500 transition-all shrink-0"
+                            >
+                              <img src={img} alt={`Issue ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                <Maximize2 className="w-3.5 h-3.5" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Resolution Proof Box */}
+                    {isClosed && (
+                      <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between gap-1 text-emerald-700 dark:text-emerald-400 font-bold">
+                          <span>Resolved by {ticket.resolvedBy || 'Admin'}</span>
+                          <span className="text-[10px] font-mono">{ticket.resolvedAt}</span>
+                        </div>
+                        {ticket.actionTaken && <p className="font-semibold text-emerald-900 dark:text-emerald-300">Action: {ticket.actionTaken}</p>}
+                        {ticket.resolutionRemarks && <p className="text-slate-600 dark:text-slate-400">{ticket.resolutionRemarks}</p>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedTicketForDetails(ticket);
+                    }}
+                    className="text-xs font-bold text-blue-600 dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View Details</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  {!isClosed && isAdminOrManager && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTicketForResolution(ticket);
+                        setIsResolveModalOpen(true);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Resolve &amp; Close Ticket</span>
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ================= MODAL 1: RAISE GRIEVANCE TICKET ================= */}
+      <AnimatePresence>
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-5 sm:p-6 text-slate-800 dark:text-slate-100 my-8 max-h-[90vh] overflow-y-auto slim-scrollbar"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400">
+                    <Plus className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                      Raise Customer Grievance
+                    </h3>
+                    <p className="text-[11px] text-slate-400">Report product/delivery issue on behalf of customer</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateTicket} className="space-y-4">
+                {/* Auto-Captured Creator / Salesperson */}
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50/90 to-indigo-50/70 dark:from-blue-950/40 dark:to-indigo-950/30 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm shadow-blue-600/30">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ticket Raised By (Logged-in)</p>
+                      <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                        {user?.userName || 'Sales Executive'} <span className="text-[10px] font-semibold text-blue-600 dark:text-sky-400">({user?.role || 'Salesperson'})</span>
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 shrink-0 border border-blue-200 dark:border-blue-800">
+                    Auto-Assigned
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Customer / Dealer / Party Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Mahadev Paint Store"
+                    value={formCustomerName}
+                    onChange={e => setFormCustomerName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Contact Person
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Rajesh Sharma"
+                      value={formContactPerson}
+                      onChange={e => setFormContactPerson(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Contact Number <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 9826012345"
+                      value={formContactNumber}
+                      onChange={e => setFormContactNumber(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      City / Area
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Indore / Bhopal"
+                      value={formCity}
+                      onChange={e => setFormCity(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Priority Level
+                    </label>
+                    <select
+                      value={formPriority}
+                      onChange={e => setFormPriority(e.target.value as GrievancePriority)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {PRIORITIES.map(p => (
+                        <option key={p} value={p}>{p} Priority</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Grievance Category
+                  </label>
+                  <select
+                    value={formCategory}
+                    onChange={e => setFormCategory(e.target.value as GrievanceCategory)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {CATEGORIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Detailed Problem Description <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="Describe batch number, damaged quantities, shade variation, leakage, etc."
+                    value={formDescription}
+                    onChange={e => setFormDescription(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Multiple Image Upload */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Attach Issue Photos / Invoices / Damage Proof (Multiple Upload)
+                  </label>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 border-dashed border-blue-400/40 hover:border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 font-bold text-xs cursor-pointer transition-all">
+                      <Upload className="w-4 h-4" />
+                      <span>Select Multiple Images from Device</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={e => handleFileUpload(e, setFormImages)}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {formImages.length > 0 && (
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        {formImages.map((img, idx) => (
+                          <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 group">
+                            <img src={img} alt="preview" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setFormImages(prev => prev.filter((_, i) => i !== idx))}
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs opacity-90 hover:opacity-100"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-blue-500/25 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    <span>Submit Grievance Ticket</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ================= MODAL 2: RESOLVE & CLOSE TICKET (MANAGER / ADMIN) ================= */}
+      <AnimatePresence>
+        {isResolveModalOpen && selectedTicketForResolution && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-5 sm:p-6 text-slate-800 dark:text-slate-100 my-8 max-h-[90vh] overflow-y-auto slim-scrollbar"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                      Resolve &amp; Close Ticket
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                      {selectedTicketForResolution.ticketNumber} · {selectedTicketForResolution.customerName}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsResolveModalOpen(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleResolveTicket} className="space-y-4">
+                {/* Auto-Captured Resolver / Admin Banner */}
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50/90 to-teal-50/70 dark:from-emerald-950/40 dark:to-teal-950/30 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm shadow-emerald-600/30">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Closing &amp; Resolving As</p>
+                      <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                        {user?.userName || 'Administrator'} <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">({user?.role || 'Admin/Manager'})</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Raised By</p>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{selectedTicketForResolution.salesPersonName}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Action Taken Summary
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Replacement 5 Buckets Dispatched / Credit Note Issued"
+                    value={resolveActionTaken}
+                    onChange={e => setResolveActionTaken(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Resolution Remarks &amp; Closing Notes <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="Explain how the grievance was addressed and agreed with the customer."
+                    value={resolveRemarks}
+                    onChange={e => setResolveRemarks(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                {/* Multiple Resolution Proof Upload */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Attach Resolution Proofs (Dispatch Slip / Credit Note / Inspection Photos)
+                  </label>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 border-dashed border-emerald-400/40 hover:border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 font-bold text-xs cursor-pointer transition-all">
+                      <Upload className="w-4 h-4" />
+                      <span>Select Multiple Resolution Proof Images</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={e => handleFileUpload(e, setResolveImages)}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {resolveImages.length > 0 && (
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        {resolveImages.map((img, idx) => (
+                          <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 group">
+                            <img src={img} alt="resolution preview" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setResolveImages(prev => prev.filter((_, i) => i !== idx))}
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs opacity-90 hover:opacity-100"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setIsResolveModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isResolving}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/25 cursor-pointer disabled:opacity-50"
+                  >
+                    {isResolving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    <span>Confirm &amp; Close Ticket</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ================= MODAL: TICKET DETAILS POPUP ================= */}
+      <AnimatePresence>
+        {selectedTicketForDetails && (
+          <div
+            onClick={() => setSelectedTicketForDetails(null)}
+            className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 shadow-2xl overflow-hidden my-auto"
+            >
+              {/* Modal Header */}
+              <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800/80 flex items-start justify-between gap-3 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900/90 dark:to-slate-900">
+                <div className="space-y-1.5 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono font-black text-xs text-blue-600 dark:text-sky-400 px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-800/60">
+                      {selectedTicketForDetails.ticketNumber}
+                    </span>
+
+                    <span
+                      className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-lg uppercase tracking-wider border ${
+                        selectedTicketForDetails.priority === 'Urgent'
+                          ? 'bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800'
+                          : selectedTicketForDetails.priority === 'High'
+                          ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+                          : selectedTicketForDetails.priority === 'Medium'
+                          ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      {selectedTicketForDetails.priority} Priority
+                    </span>
+
+                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/60 dark:border-indigo-800/60">
+                      {selectedTicketForDetails.category}
+                    </span>
+
+                    <span
+                      className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full border ${
+                        selectedTicketForDetails.status === 'Closed'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                          : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+                      }`}
+                    >
+                      {selectedTicketForDetails.status === 'Closed' ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                      <span>{selectedTicketForDetails.status === 'Closed' ? 'RESOLVED' : 'OPEN'}</span>
+                    </span>
+                  </div>
+
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
+                    {selectedTicketForDetails.customerName}
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedTicketForDetails(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                  aria-label="Close dialog"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Content Scrollable Area */}
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 text-slate-800 dark:text-slate-200 text-xs">
+                {/* 1. Customer & Contact Information */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <Building2 className="w-3 h-3 text-blue-500" />
+                      <span>Party / Customer</span>
+                    </p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      {selectedTicketForDetails.customerName}
+                    </p>
+                    {selectedTicketForDetails.contactPerson && (
+                      <p className="text-[11px] text-slate-500">Attn: {selectedTicketForDetails.contactPerson}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <Phone className="w-3 h-3 text-emerald-500" />
+                      <span>Contact &amp; City</span>
+                    </p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      {selectedTicketForDetails.contactNumber || 'N/A'}
+                    </p>
+                    {selectedTicketForDetails.city && (
+                      <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                        <span>{selectedTicketForDetails.city}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <User className="w-3 h-3 text-indigo-500" />
+                      <span>Raised By</span>
+                    </p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      {selectedTicketForDetails.salesPersonName}
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-mono">
+                      {selectedTicketForDetails.createdAt}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 2. Issue Description */}
+                <div className="space-y-1.5">
+                  <h5 className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Grievance / Problem Description</span>
+                  </h5>
+                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+                    <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-normal">
+                      {selectedTicketForDetails.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3. Attached Evidence Images */}
+                {selectedTicketForDetails.images && selectedTicketForDetails.images.length > 0 && (
+                  <div className="space-y-2">
+                    <h5 className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Attached Evidence Photos ({selectedTicketForDetails.images.length})</span>
+                    </h5>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {selectedTicketForDetails.images.map((img, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => setActiveLightboxImage(img)}
+                          className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 group cursor-pointer shadow-xs hover:shadow-md transition-all hover:scale-[1.02]"
+                        >
+                          <img
+                            src={img}
+                            alt={`Evidence ${idx + 1}`}
+                            className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                            <Maximize2 className="w-5 h-5" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Resolution Proof & Remarks (If Closed) */}
+                {selectedTicketForDetails.status === 'Closed' && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/60 space-y-3">
+                    <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-black text-xs">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Resolution &amp; Closure Details</span>
+                      {selectedTicketForDetails.resolvedAt && (
+                        <span className="text-[10px] font-normal text-emerald-600 dark:text-emerald-400 font-mono ml-auto">
+                          {selectedTicketForDetails.resolvedAt}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <p className="text-[10px] font-bold text-emerald-700/80 dark:text-emerald-400/80 uppercase">
+                          Action Taken:
+                        </p>
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">
+                          {selectedTicketForDetails.actionTaken || 'Resolved & Settled'}
+                        </p>
+                      </div>
+
+                      {selectedTicketForDetails.resolvedBy && (
+                        <div>
+                          <p className="text-[10px] font-bold text-emerald-700/80 dark:text-emerald-400/80 uppercase">
+                            Resolved By:
+                          </p>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white">
+                            {selectedTicketForDetails.resolvedBy}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedTicketForDetails.resolutionRemarks && (
+                      <div className="p-3 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-emerald-200/50 dark:border-emerald-800/50">
+                        <p className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 uppercase mb-0.5">
+                          Resolution Remarks:
+                        </p>
+                        <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-normal">
+                          {selectedTicketForDetails.resolutionRemarks}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedTicketForDetails.resolutionImages && selectedTicketForDetails.resolutionImages.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 uppercase">
+                          Resolution Proofs ({selectedTicketForDetails.resolutionImages.length}):
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {selectedTicketForDetails.resolutionImages.map((img, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => setActiveLightboxImage(img)}
+                              className="relative aspect-square rounded-xl overflow-hidden border border-emerald-200 dark:border-emerald-800 group cursor-pointer shadow-xs hover:scale-[1.02] transition-transform"
+                            >
+                              <img
+                                src={img}
+                                alt={`Resolution Proof ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                <Maximize2 className="w-4 h-4" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTicketForDetails(null)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Close
+                </button>
+
+                {selectedTicketForDetails.status !== 'Closed' && isAdminOrManager && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const t = selectedTicketForDetails;
+                      setSelectedTicketForDetails(null);
+                      setSelectedTicketForResolution(t);
+                      setIsResolveModalOpen(true);
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/25 cursor-pointer transition-all"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Resolve &amp; Close Ticket</span>
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ================= MODAL 3: FULL SCREEN IMAGE LIGHTBOX ================= */}
+      <AnimatePresence>
+        {activeLightboxImage && (
+          <div
+            onClick={() => setActiveLightboxImage(null)}
+            className="fixed inset-0 z-60 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+          >
+            <button
+              type="button"
+              onClick={() => setActiveLightboxImage(null)}
+              className="absolute top-4 right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all z-10 cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            <img
+              src={activeLightboxImage}
+              alt="Full view"
+              className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};

@@ -26,6 +26,11 @@ import {
   Building,
   Phone,
   RefreshCw,
+  Eye,
+  EyeOff,
+  Hash,
+  User as UserIcon,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -43,6 +48,7 @@ export const UserManagementModule: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form State for Create / Edit
   const [formData, setFormData] = useState({
@@ -72,16 +78,30 @@ export const UserManagementModule: React.FC = () => {
     loadUsers();
   }, []);
 
+  // List of all Manager & Admin users for Reporting Manager dropdown
+  const managerOptions = React.useMemo(() => {
+    const list = users.filter(u => u.role === 'Manager' || u.role === 'Admin');
+    if (list.length === 0) {
+      return [
+        { id: 'MGR101', userName: 'Rajesh Sharma', role: 'Manager' as const },
+        { id: 'MGR102', userName: 'Deepak Sahu', role: 'Manager' as const },
+        { id: 'ADM001', userName: 'Administrator', role: 'Admin' as const },
+      ];
+    }
+    return list;
+  }, [users]);
+
   const openCreateModal = () => {
     // Generate an automatic sequential ID suggestion
     const nextEmpNum = users.length > 0 ? 100 + users.length + 1 : 101;
+    const defaultManager = managerOptions[0]?.userName || 'Rajesh Sharma';
     setFormData({
       id: `EMP${nextEmpNum}`,
       userName: '',
       password: '',
       role: 'Sales',
       gmail: '',
-      manager: 'Rajesh Sharma',
+      manager: defaultManager,
       crm: `CRM-${nextEmpNum}`,
       profileUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80`,
     });
@@ -97,7 +117,7 @@ export const UserManagementModule: React.FC = () => {
       password: '', // leave empty unless changing
       role: u.role,
       gmail: u.gmail || '',
-      manager: u.manager || 'Rajesh Sharma',
+      manager: u.manager || managerOptions[0]?.userName || 'Rajesh Sharma',
       crm: u.crm || 'CRM-1001',
       profileUrl: u.profileUrl || '',
     });
@@ -205,20 +225,29 @@ export const UserManagementModule: React.FC = () => {
 
   const totalUsers = users.length;
   const salesCount = users.filter((u) => u.role === 'Sales').length;
+  const managerCount = users.filter((u) => u.role === 'Manager').length;
   const adminCount = users.filter((u) => u.role === 'Admin').length;
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+      {/* Top Banner Header with Gradient Backdrop */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-purple-500/10 dark:from-blue-950/50 dark:via-slate-900 dark:to-indigo-950/40 p-4 sm:p-5 rounded-3xl border border-blue-200/80 dark:border-blue-800/60 shadow-sm relative overflow-hidden">
+        {/* Soft gradient glow accents */}
+        <div className="absolute -top-12 -right-12 w-48 h-48 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-gradient-to-tr from-purple-500/15 to-blue-500/15 rounded-full blur-2xl pointer-events-none" />
 
         <div className="flex items-center gap-3.5 relative z-10">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0">
-            <Users className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-blue-500/30 shrink-0 ring-1 ring-white/20">
+            <Users className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-500/15 to-indigo-500/15 text-blue-600 dark:text-sky-400 border border-blue-300/60 dark:border-blue-700/60 flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5 text-blue-500 dark:text-sky-400" />
+                <span>SUPABASE AUTH &amp; ACCESS CONTROL</span>
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 dark:from-white dark:via-blue-100 dark:to-indigo-200 bg-clip-text text-transparent">
               User &amp; Employee Management
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -227,12 +256,12 @@ export const UserManagementModule: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 relative z-10">
+        <div className="flex items-center gap-2.5 relative z-10 self-end sm:self-center">
           <button
             type="button"
             onClick={loadUsers}
             disabled={isLoading}
-            className="p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition-all cursor-pointer"
+            className="p-2.5 rounded-2xl border border-blue-200/80 dark:border-slate-700 bg-white/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-50/80 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
             title="Refresh Users"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
@@ -243,7 +272,7 @@ export const UserManagementModule: React.FC = () => {
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={openCreateModal}
-            className="py-2.5 px-5 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            className="py-2.5 px-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>Create New ID</span>
@@ -251,47 +280,85 @@ export const UserManagementModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black">
-            {totalUsers}
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+      {/* Compact Metrics Row with Gradient Styling */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Total Accounts */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-white to-indigo-500/5 dark:from-blue-950/40 dark:via-slate-900 dark:to-indigo-950/20 p-3.5 sm:p-4 rounded-3xl border border-blue-200/80 dark:border-blue-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
               Total Accounts
             </p>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">
-              {totalUsers} Registered
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              {totalUsers}
             </h3>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+              All registered staff IDs
+            </p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black">
-            {salesCount}
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        {/* Sales Executives */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500/10 via-white to-teal-500/5 dark:from-emerald-950/40 dark:via-slate-900 dark:to-teal-950/20 p-3.5 sm:p-4 rounded-3xl border border-emerald-200/80 dark:border-emerald-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
               Sales Executives
             </p>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">
-              {salesCount} Field Reps
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/25 shrink-0">
+              <Briefcase className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <h3 className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+              {salesCount}
             </h3>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+              Active field officers
+            </p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black">
-            {adminCount}
+        {/* Area Managers */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-white to-orange-500/5 dark:from-amber-950/40 dark:via-slate-900 dark:to-orange-950/20 p-3.5 sm:p-4 rounded-3xl border border-amber-200/80 dark:border-amber-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+              Area Managers
+            </p>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/25 shrink-0">
+              <UserCheck className="w-4 h-4" />
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="mt-2">
+            <h3 className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+              {managerCount}
+            </h3>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+              Team &amp; territory leads
+            </p>
+          </div>
+        </div>
+
+        {/* Administrators */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-purple-500/10 via-white to-pink-500/5 dark:from-purple-950/40 dark:via-slate-900 dark:to-pink-950/20 p-3.5 sm:p-4 rounded-3xl border border-purple-200/80 dark:border-purple-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
               Administrators
             </p>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">
-              {adminCount} Master Admins
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 text-white flex items-center justify-center shadow-md shadow-purple-500/25 shrink-0">
+              <Shield className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <h3 className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 tracking-tight">
+              {adminCount}
             </h3>
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+              Full control accounts
+            </p>
           </div>
         </div>
       </div>
@@ -461,153 +528,214 @@ export const UserManagementModule: React.FC = () => {
       {/* ================= MODAL: CREATE / EDIT USER ================= */}
       <AnimatePresence>
         {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 15 }}
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: 15 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 max-w-lg w-full text-slate-900 dark:text-white shadow-2xl border border-slate-200 dark:border-slate-800 relative my-8"
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-7 max-w-xl w-full text-slate-900 dark:text-white shadow-2xl border border-slate-200/90 dark:border-slate-800 relative my-6"
             >
               {/* Close Button */}
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30">
-                  <UserPlus className="w-6 h-6" />
+              {/* Modal Header */}
+              <div className="flex items-start gap-3.5 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">
+                  {editingUser ? <Edit2 className="w-6 h-6" /> : <UserPlus className="w-6 h-6" />}
                 </div>
-                <div>
-                  <h3 className="text-lg sm:text-xl font-black">
+                <div className="min-w-0 pr-8">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 border border-blue-200/60 dark:border-blue-800/60">
+                      {editingUser ? 'Credential Editor' : 'New Staff Setup'}
+                    </span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white mt-1">
                     {editingUser ? 'Edit User Credentials' : 'Create New Employee ID'}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {editingUser
-                      ? `Modifying credentials for ${editingUser.id}`
-                      : 'Assign a new login ID and role for field or admin staff'}
+                      ? `Modifying login profile and access for ${editingUser.id}`
+                      : 'Assign a unique employee login ID, system role, and reporting manager'}
                   </p>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* User ID */}
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                {/* 1. Identity & Credentials Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Employee ID */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1.5">
-                      Employee ID / Login ID *
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Employee ID / Login ID <span className="text-rose-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={formData.id}
-                      onChange={(e) => setFormData({ ...formData, id: e.target.value.toUpperCase() })}
-                      disabled={!!editingUser || isSubmitting}
-                      placeholder="e.g. EMP107 or ADM02"
-                      required
-                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-mono font-bold focus:outline-none focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
+                    <div className="relative">
+                      <Hash className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={formData.id}
+                        onChange={(e) => setFormData({ ...formData, id: e.target.value.toUpperCase() })}
+                        disabled={!!editingUser || isSubmitting}
+                        placeholder="e.g. EMP107"
+                        required
+                        className="w-full pl-9.5 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-mono font-black focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed text-slate-900 dark:text-white"
+                      />
+                    </div>
                   </div>
 
                   {/* Full Name */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1.5">
-                      Full Name *
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                      Full Name <span className="text-rose-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={formData.userName}
-                      onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
-                      disabled={isSubmitting}
-                      placeholder="e.g. Rahul Sharma"
-                      required
-                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-blue-500"
-                    />
+                    <div className="relative">
+                      <UserIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={formData.userName}
+                        onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
+                        disabled={isSubmitting}
+                        placeholder="e.g. Rahul Sharma"
+                        required
+                        className="w-full pl-9.5 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-slate-900 dark:text-white placeholder-slate-400"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {/* Password Field */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1.5">
-                    {editingUser ? 'New Password (Leave blank to keep unchanged)' : 'Login Password *'}
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                    <span>
+                      {editingUser ? 'New Password' : 'Login Password'} <span className="text-rose-500">{!editingUser && '*'}</span>
+                    </span>
+                    {editingUser && (
+                      <span className="text-[10px] text-slate-400 font-normal">Leave blank to keep unchanged</span>
+                    )}
                   </label>
                   <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
-                      type="text"
+                      type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       disabled={isSubmitting}
                       placeholder={editingUser ? '•••••••• (unchanged)' : 'Enter strong password (e.g. 123456)'}
                       required={!editingUser}
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-mono focus:outline-none focus:border-blue-500"
+                      className="w-full pl-9.5 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-slate-900 dark:text-white"
                     />
-                    <Key className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 
                 {/* Role Selection */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1.5">
-                    System Role *
+                  <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                    System Role &amp; Permission Level <span className="text-rose-500">*</span>
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(['Sales', 'Admin', 'Manager'] as const).map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, role: r })}
-                        className={`py-2 px-3 rounded-2xl text-xs font-extrabold border transition-all cursor-pointer text-center ${
-                          formData.role === r
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/30'
-                            : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {[
+                      { role: 'Sales' as const, label: 'Sales', desc: 'Field Officer', icon: Briefcase },
+                      { role: 'Admin' as const, label: 'Admin', desc: 'Full System', icon: Shield },
+                      { role: 'Manager' as const, label: 'Manager', desc: 'Team Lead', icon: UserCheck },
+                    ].map(({ role: r, label, desc, icon: IconComponent }) => {
+                      const isSelected = formData.role === r;
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, role: r })}
+                          className={`p-3 rounded-2xl border transition-all cursor-pointer text-left flex flex-col justify-between ${
+                            isSelected
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25 ring-2 ring-blue-500/30'
+                              : 'bg-slate-50/80 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <IconComponent className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                            {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                          </div>
+                          <div>
+                            <p className="text-xs font-black">{label}</p>
+                            <p className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-400'}`}>
+                              {desc}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Email & Manager */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Email & Reporting Manager */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                  {/* Email */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1.5">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                       Email Address
                     </label>
-                    <input
-                      type="email"
-                      value={formData.gmail}
-                      onChange={(e) => setFormData({ ...formData, gmail: e.target.value })}
-                      disabled={isSubmitting}
-                      placeholder="e.g. user@popularpaints.com"
-                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-blue-500"
-                    />
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="email"
+                        value={formData.gmail}
+                        onChange={(e) => setFormData({ ...formData, gmail: e.target.value })}
+                        disabled={isSubmitting}
+                        placeholder="e.g. user@popularpaints.com"
+                        className="w-full pl-9.5 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-slate-900 dark:text-white placeholder-slate-400"
+                      />
+                    </div>
                   </div>
 
+                  {/* Reporting Manager */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1.5">
-                      Reporting Manager
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                      <span>Reporting Manager</span>
+                      <span className="text-[10px] text-blue-600 dark:text-sky-400 font-bold lowercase">from managers</span>
                     </label>
-                    <input
-                      type="text"
-                      value={formData.manager}
-                      onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
-                      disabled={isSubmitting}
-                      placeholder="e.g. Rajesh Sharma"
-                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm focus:outline-none focus:border-blue-500"
-                    />
+                    <div className="relative">
+                      <Building className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <select
+                        value={formData.manager}
+                        onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-full pl-9.5 pr-9 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 cursor-pointer appearance-none"
+                      >
+                        <option value="">-- Select Reporting Manager --</option>
+                        {managerOptions.map((mgr) => (
+                          <option key={mgr.id + mgr.userName} value={mgr.userName}>
+                            {mgr.userName} ({mgr.id} · {mgr.role})
+                          </option>
+                        ))}
+                        {formData.manager && !managerOptions.some(m => m.userName.toLowerCase() === formData.manager.toLowerCase()) && (
+                          <option value={formData.manager}>{formData.manager} (Current / Custom)</option>
+                        )}
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                {/* Modal Footer / Action Buttons */}
+                <div className="flex items-center justify-end gap-3 pt-5 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
                     disabled={isSubmitting}
-                    className="py-2.5 px-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+                    className="py-2.5 px-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-xs sm:text-sm font-bold transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -617,7 +745,7 @@ export const UserManagementModule: React.FC = () => {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isSubmitting}
-                    className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
+                    className="py-2.5 px-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-60"
                   >
                     {isSubmitting ? (
                       <>
@@ -626,7 +754,7 @@ export const UserManagementModule: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Check className="w-4 h-4" />
+                        <Check className="w-4 h-4 stroke-[3]" />
                         <span>{editingUser ? 'Save Changes' : 'Create User ID'}</span>
                       </>
                     )}

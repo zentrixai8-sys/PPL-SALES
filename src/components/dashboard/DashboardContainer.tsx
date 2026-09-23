@@ -19,6 +19,7 @@ import { SettingsModule } from '../modules/SettingsModule';
 import { UserProfileModule } from '../modules/UserProfileModule';
 import { ReferencesModule } from '../modules/ReferencesModule';
 import { UserManagementModule } from '../modules/UserManagementModule';
+import { GrievanceModule } from '../modules/GrievanceModule';
 import { SalesAutoTracker } from './SalesAutoTracker';
 import { RefreshCw, ArrowDown } from 'lucide-react';
 
@@ -30,6 +31,7 @@ export type NavigationTab =
   | 'gps_tracking'
   | 'customers'
   | 'references'
+  | 'grievances'
   | 'reports'
   | 'analytics'
   | 'users'
@@ -154,6 +156,8 @@ export const DashboardContainer: React.FC = () => {
         return <UserProfileModule />;
       case 'references':
         return <ReferencesModule />;
+      case 'grievances':
+        return <GrievanceModule />;
       case 'users':
         return <UserManagementModule />;
       default:
