@@ -65,7 +65,6 @@ export const Header: React.FC<HeaderProps> = ({
   } = useAuth();
   
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const user = authState.user;
   const userInitial = (user?.userName || 'U').charAt(0).toUpperCase();
@@ -107,18 +106,18 @@ export const Header: React.FC<HeaderProps> = ({
     }));
 
   return (
-    <header className="sticky top-0 z-30 min-h-[4rem] md:min-h-16 pt-[max(env(safe-area-inset-top,0px),26px)] lg:pt-0 pb-2 md:pb-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-3.5 md:px-6 flex items-center justify-between text-slate-800 dark:text-slate-100 transition-colors shadow-xs">
+    <header className="sticky top-0 z-30 min-h-[4.75rem] lg:min-h-16 pt-[max(env(safe-area-inset-top,0px),34px)] lg:pt-0 pb-3 lg:pb-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 md:px-6 flex items-center justify-between text-slate-800 dark:text-slate-100 transition-colors shadow-xs">
       {/* Left section: Mobile Brand / Tab title vs Desktop Hamburger & Live Status */}
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex items-center gap-2.5 md:gap-3.5">
         {/* Mobile View App Header Left */}
-        <div className="flex lg:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-2.5">
           <img
             src={themeMode === 'light' ? '/popular_paints_logo_dark.png' : '/popular_paints_logo.png'}
             alt="Popular Paints"
-            className="h-7 w-auto object-contain"
+            className="h-8 w-auto object-contain shrink-0"
           />
-          <div className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700" />
-          <span className="text-xs font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px] sm:max-w-[200px]">
+          <div className="h-5 w-[1.5px] bg-slate-300 dark:bg-slate-700" />
+          <span className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[150px] sm:max-w-[220px]">
             {TAB_TITLES[currentTab] || 'Sales Portal'}
           </span>
         </div>
@@ -146,21 +145,21 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right Section: Notifications, Theme Switcher & User Profile */}
-      <div className="flex items-center gap-1.5 md:gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
-          className="p-1.5 md:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+          className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
           title={themeMode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         >
           {themeMode === 'dark' ? (
             <>
-              <Sun className="w-4 h-4 md:w-5 md:h-5 text-amber-400" />
+              <Sun className="w-5 h-5 text-amber-400" />
               <span className="hidden sm:inline text-amber-300">Light</span>
             </>
           ) : (
             <>
-              <Moon className="w-4 h-4 md:w-5 md:h-5 text-indigo-500" />
+              <Moon className="w-5 h-5 text-indigo-500" />
               <span className="hidden sm:inline text-indigo-600 font-bold">Dark</span>
             </>
           )}
@@ -171,14 +170,13 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => {
               setShowNotifications(!showNotifications);
-              setShowProfileMenu(false);
             }}
-            className="relative p-1.5 md:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+            className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
             title="Notifications"
           >
-            <Bell className="w-4 h-4 md:w-5 md:h-5" />
+            <Bell className="w-5 h-5" />
             {(leaveNotifications.length > 0 || (activeNotice && activeNotice.isActive)) && (
-              <span className="absolute top-1 right-1 md:top-1.5 md:right-1.5 flex h-2.5 w-2.5">
+              <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 ring-2 ring-white dark:ring-slate-900"></span>
               </span>
@@ -270,84 +268,32 @@ export const Header: React.FC<HeaderProps> = ({
           </AnimatePresence>
         </div>
 
-        {/* User Profile Menu */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowProfileMenu(!showProfileMenu);
-              setShowNotifications(false);
-            }}
-            className="flex items-center gap-2 p-1 md:p-1.5 md:pr-3 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
-          >
-            <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl overflow-hidden bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white text-xs md:text-sm font-bold ring-2 ring-sky-500/30 shrink-0 shadow-sm">
-              {user?.profileUrl ? (
-                <img src={user.profileUrl} alt={user.userName} className="w-full h-full object-cover" />
-              ) : (
-                userInitial
-              )}
-            </div>
-            <div className="hidden md:block text-left leading-none">
-              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[120px]">
-                {user?.userName || 'User'}
-              </div>
-              <div className="text-[10px] text-sky-600 font-medium mt-0.5">
-                {user?.role || 'Sales'}
-              </div>
-            </div>
-          </button>
-
-          <AnimatePresence>
-            {showProfileMenu && (
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="fixed inset-x-3 top-16 md:absolute md:inset-auto md:right-0 md:top-auto md:mt-2 md:w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 text-slate-800 dark:text-slate-200"
-              >
-                <div className="flex items-center gap-3 pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white text-base font-bold ring-2 ring-sky-500/40 shrink-0">
-                    {user?.profileUrl ? (
-                      <img src={user.profileUrl} alt={user.userName} className="w-full h-full object-cover" />
-                    ) : (
-                      userInitial
-                    )}
-                  </div>
-                  <div className="overflow-hidden">
-                    <h4 className="font-semibold text-sm text-slate-900 dark:text-white truncate">{user?.userName}</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">ID: {user?.id}</p>
-                    <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950 text-sky-600 border border-sky-200 dark:border-sky-800/60 font-semibold">
-                      Manager: {user?.manager}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <button
-                    onClick={() => {
-                      onTabChange('profile');
-                      setShowProfileMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-medium"
-                  >
-                    <User className="w-4 h-4 text-sky-600" />
-                    <span>My Profile &amp; Security</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      logout();
-                      setShowProfileMenu(false);
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors font-medium"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              </motion.div>
+        {/* User DP Button: Direct Profile Page Navigation (Mobile & Desktop) */}
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={() => {
+            onTabChange('profile');
+            setShowNotifications(false);
+          }}
+          className="flex items-center gap-2 p-0.5 sm:p-1 sm:pr-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all cursor-pointer"
+          title="Open Profile Page"
+        >
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white text-xs sm:text-sm font-bold ring-2 ring-sky-500/40 shrink-0 shadow-2xs">
+            {user?.profileUrl ? (
+              <img src={user.profileUrl} alt={user.userName} className="w-full h-full object-cover" />
+            ) : (
+              userInitial
             )}
-          </AnimatePresence>
-        </div>
+          </div>
+          <div className="hidden md:block text-left leading-none">
+            <div className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[120px]">
+              {user?.userName || 'User'}
+            </div>
+            <div className="text-[10px] text-sky-600 font-medium mt-0.5">
+              {user?.role || 'Sales'}
+            </div>
+          </div>
+        </motion.button>
       </div>
     </header>
   );

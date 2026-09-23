@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { NavigationTab } from '../dashboard/DashboardContainer';
@@ -14,12 +14,13 @@ import {
   Sun,
   Moon,
   X,
+  Search,
   Sparkles,
-  ChevronRight,
+  ShieldAlert,
   ShieldCheck,
-  CheckCircle2,
-  Grid,
-  ShieldAlert
+  Building2,
+  TrendingUp,
+  MapPin
 } from 'lucide-react';
 
 interface MobileMoreSheetProps {
@@ -37,293 +38,352 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
 }) => {
   const { authState, logout, themeMode, toggleTheme } = useAuth();
   const user = authState.user;
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const moreModules = [
+  // Group 1: Daily Quick Actions / For You
+  const forYouModules = [
     {
       id: 'gps_tracking' as NavigationTab,
-      label: 'GPS Tracking',
-      desc: 'Live location & field routes',
+      label: 'gps live',
+      subtext: 'live tracking',
       icon: Navigation,
-      gradient: 'from-teal-500/20 to-emerald-500/20',
-      iconColor: 'text-teal-600 dark:text-teal-400',
-      borderColor: 'border-teal-500/30',
-      badge: 'Live',
-      badgeColor: 'bg-teal-500/15 text-teal-600 dark:text-teal-300 border-teal-500/30'
+      badge: 'LIVE',
+      badgeType: 'red_dot',
     },
     {
       id: 'references' as NavigationTab,
-      label: 'References',
-      desc: 'Leads & new dealer references',
+      label: 'references',
+      subtext: 'dealer leads',
       icon: UserPlus,
-      gradient: 'from-purple-500/20 to-pink-500/20',
-      iconColor: 'text-purple-600 dark:text-purple-400',
-      borderColor: 'border-purple-500/30',
-      badge: 'Leads',
-      badgeColor: 'bg-purple-500/15 text-purple-600 dark:text-purple-300 border-purple-500/30'
+      badge: 'LEADS',
+      badgeType: 'pill',
     },
     {
       id: 'grievances' as NavigationTab,
-      label: 'Customer Grievances',
-      desc: 'Raise & resolve support tickets',
+      label: 'grievances',
+      subtext: 'support tickets',
       icon: ShieldAlert,
-      gradient: 'from-amber-500/20 to-rose-500/20',
-      iconColor: 'text-amber-600 dark:text-amber-400',
-      borderColor: 'border-amber-500/30',
-      badge: 'Tickets',
-      badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30'
+      badge: 'TICKETS',
+      badgeType: 'pill',
     },
     {
       id: 'reports' as NavigationTab,
-      label: 'Reports & Sheets',
-      desc: 'Google Sheets & exported logs',
+      label: 'reports & logs',
+      subtext: 'excel sheets',
       icon: FileSpreadsheet,
-      gradient: 'from-emerald-500/20 to-green-500/20',
-      iconColor: 'text-emerald-600 dark:text-emerald-400',
-      borderColor: 'border-emerald-500/30',
-      badge: 'Excel',
-      badgeColor: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-500/30'
+      badge: 'EXCEL',
+      badgeType: 'pill',
     },
+  ];
+
+  // Group 2: Business & Operations
+  const businessModules = [
     {
       id: 'analytics' as NavigationTab,
-      label: 'Analytics',
-      desc: 'Sales performance & graphs',
+      label: 'analytics',
+      subtext: 'sales metrics',
       icon: BarChart3,
-      gradient: 'from-sky-500/20 to-blue-500/20',
-      iconColor: 'text-sky-600 dark:text-sky-400',
-      borderColor: 'border-sky-500/30',
-      badge: 'Stats',
-      badgeColor: 'bg-sky-500/15 text-sky-600 dark:text-sky-300 border-sky-500/30'
+      badge: 'STATS',
+      badgeType: 'pill',
     },
     {
       id: 'customers' as NavigationTab,
-      label: 'Clients / Parties',
-      desc: 'Directory of customers & shops',
-      icon: Users,
-      gradient: 'from-amber-500/20 to-orange-500/20',
-      iconColor: 'text-amber-600 dark:text-amber-400',
-      borderColor: 'border-amber-500/30',
-      badge: 'Directory',
-      badgeColor: 'bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30'
+      label: 'parties / shops',
+      subtext: 'client directory',
+      icon: Building2,
+      badge: 'DIRECTORY',
+      badgeType: 'pill',
     },
     {
       id: 'profile' as NavigationTab,
-      label: 'My Profile',
-      desc: 'User account, DP & security',
+      label: 'my profile',
+      subtext: 'account details',
       icon: User,
-      gradient: 'from-indigo-500/20 to-violet-500/20',
-      iconColor: 'text-indigo-600 dark:text-indigo-400',
-      borderColor: 'border-indigo-500/30',
-      badge: 'Account',
-      badgeColor: 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border-indigo-500/30'
+      badge: 'PROFILE',
+      badgeType: 'pill',
     },
     ...(user?.role === 'Admin'
       ? [
           {
             id: 'users' as NavigationTab,
-            label: 'User Management',
-            desc: 'Create & manage employee IDs',
-            icon: Users,
-            gradient: 'from-blue-500/20 to-indigo-500/20',
-            iconColor: 'text-blue-600 dark:text-blue-400',
-            borderColor: 'border-blue-500/30',
-            badge: 'Admin',
-            badgeColor: 'bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-500/30',
+            label: 'user control',
+            subtext: 'staff management',
+            icon: ShieldCheck,
+            badge: 'ADMIN',
+            badgeType: 'pill_dark',
           },
         ]
       : []),
     {
       id: 'settings' as NavigationTab,
-      label: 'App Settings',
-      desc: 'System preferences & config',
+      label: 'settings',
+      subtext: 'app config',
       icon: Settings,
-      gradient: 'from-slate-500/20 to-zinc-500/20',
-      iconColor: 'text-slate-600 dark:text-slate-300',
-      borderColor: 'border-slate-500/30',
-      badge: 'Config',
-      badgeColor: 'bg-slate-500/15 text-slate-600 dark:text-slate-300 border-slate-500/30'
+      badge: 'CONFIG',
+      badgeType: 'pill',
     },
   ];
 
-  const userInitial = (user?.userName || 'U').charAt(0).toUpperCase();
+  const filterItem = (item: { label: string; subtext: string }) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return item.label.toLowerCase().includes(q) || item.subtext.toLowerCase().includes(q);
+  };
+
+  const filteredForYou = forYouModules.filter(filterItem);
+  const filteredBusiness = businessModules.filter(filterItem);
 
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
-          {/* Backdrop with smooth blur */}
+          {/* Subtle blurred backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/75 backdrop-blur-md"
             onClick={onClose}
           />
 
-          {/* Native Bottom Sheet Drawer Container */}
+          {/* CRED-style Bottom Drawer */}
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 350 }}
-            className="relative z-10 w-full max-w-lg mx-auto max-h-[88dvh] bg-white dark:bg-slate-900 rounded-t-[2rem] border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100"
+            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            className="relative z-10 w-full max-w-lg mx-auto max-h-[90dvh] bg-white dark:bg-[#0c0f17] rounded-t-[2rem] border-t border-slate-200/80 dark:border-slate-800/80 shadow-[0_-15px_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100"
           >
-            {/* Top Sheet Drag Handle & Title */}
-            <div className="pt-3 pb-3 px-5 border-b border-slate-100 dark:border-slate-800/80 shrink-0 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md">
-              <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-3" />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                    <Grid className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
-                      All Applications &amp; Features
-                    </h3>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Tap any module to open instantly
-                    </p>
-                  </div>
+            {/* Top Pull Handle */}
+            <div className="pt-2.5 pb-1 flex justify-center shrink-0">
+              <div className="w-9 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" />
+            </div>
+
+            {/* Header: Trending CRED Search Bar */}
+            <div className="px-4 pt-1 pb-2 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder='search "reports, tracking, leads"'
+                    className="w-full pl-8 pr-7 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/70 dark:border-slate-800/90 text-[11px] text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400/40 font-medium transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
+
+                {/* Close Drawer Button */}
                 <button
                   type="button"
                   onClick={onClose}
-                  className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-center text-slate-500 dark:text-slate-400 active:scale-95 transition-transform shrink-0"
                   aria-label="Close"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3.5 custom-scrollbar overscroll-contain">
-              {/* User Profile Summary Card */}
-              <div
-                onClick={() => {
-                  onTabChange('profile');
-                  onClose();
-                }}
-                className="p-3.5 rounded-2xl bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-purple-500/10 border border-sky-500/20 flex items-center justify-between shadow-xs cursor-pointer hover:border-sky-500/40 transition-all active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-sky-500/20 shrink-0 ring-2 ring-sky-500/30">
-                    {user?.profileUrl ? (
-                      <img src={user.profileUrl} alt={user.userName} className="w-full h-full object-cover" />
-                    ) : (
-                      userInitial
-                    )}
-                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
+            {/* Scrollable CRED explore content */}
+            <div className="flex-1 overflow-y-auto px-4 py-1.5 space-y-4 custom-scrollbar overscroll-contain">
+              {/* SECTION 1: FOR YOU */}
+              {filteredForYou.length > 0 && (
+                <div>
+                  <div className="text-[9.5px] font-extrabold tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase mb-2.5 px-0.5">
+                    FOR YOU
                   </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
-                        {user?.userName || 'User'}
+
+                  <div className="grid grid-cols-4 gap-y-3 gap-x-1.5">
+                    {filteredForYou.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = currentTab === item.id;
+
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            onTabChange(item.id);
+                            onClose();
+                          }}
+                          className="flex flex-col items-center group active:scale-90 transition-transform"
+                        >
+                          {/* Circular CRED icon */}
+                          <div
+                            className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
+                              isActive
+                                ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md ring-2 ring-indigo-500/40'
+                                : 'bg-slate-50 dark:bg-[#141824] text-slate-800 dark:text-slate-200 border border-slate-200/90 dark:border-slate-800 shadow-xs group-hover:border-slate-400'
+                            }`}
+                          >
+                            <Icon className="w-5 h-5 stroke-[1.7]" />
+
+                            {/* Red live pulse badge or micro pill */}
+                            {item.badgeType === 'red_dot' ? (
+                              <span className="absolute top-0.5 right-0.5 flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500 ring-1 ring-white dark:ring-[#0c0f17]" />
+                              </span>
+                            ) : item.badge ? (
+                              <span className="absolute -bottom-1 px-1 py-0.2 rounded-[3px] bg-slate-900 dark:bg-slate-100 text-[6.5px] font-black tracking-wider text-white dark:text-slate-900 shadow-xs border border-white/20 dark:border-black/20 uppercase">
+                                {item.badge}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {/* Item Label */}
+                          <span
+                            className={`text-[10px] font-medium tracking-tight text-center mt-1.5 leading-tight ${
+                              isActive
+                                ? 'font-bold text-indigo-600 dark:text-indigo-400'
+                                : 'text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            {item.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* TRENDING PROMO / METRICS BANNER (CRED Style) */}
+              {!searchQuery && (
+                <div
+                  onClick={() => {
+                    onTabChange('analytics');
+                    onClose();
+                  }}
+                  className="relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-100/90 via-orange-50 to-amber-50 dark:from-slate-900 dark:via-indigo-950/40 dark:to-slate-900 border border-amber-200/80 dark:border-slate-800 p-2.5 sm:p-3 shadow-xs cursor-pointer active:scale-[0.99] transition-all"
+                >
+                  <div className="flex items-center justify-between gap-2.5">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[8.5px] font-black tracking-wider uppercase px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                          POPULAR PAINTS CRM
+                        </span>
+                      </div>
+                      <h4 className="text-[11.5px] sm:text-xs font-extrabold text-slate-900 dark:text-white leading-snug">
+                        Live Field Routes &amp; Sales Targets
                       </h4>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-300 font-bold border border-sky-500/30 shrink-0">
-                        {user?.role || 'Sales'}
-                      </span>
+                      <p className="text-[9.5px] text-slate-600 dark:text-slate-400 font-medium line-clamp-1">
+                        Instant reporting, attendance &amp; order tracking
+                      </p>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                      {user?.role === 'Admin' ? 'Administrator' : 'Sales Representative'} · <span className="font-mono text-sky-600 dark:text-sky-400 font-semibold">{user?.id || 'CRM'}</span>
-                    </p>
+
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/15 dark:bg-indigo-500/20 text-amber-700 dark:text-indigo-300 border border-amber-500/30 flex items-center justify-center shrink-0">
+                      <TrendingUp className="w-4 h-4" />
+                    </div>
                   </div>
                 </div>
+              )}
 
-                <div className="p-1.5 rounded-xl bg-white/60 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-slate-400 shrink-0 ml-2">
-                  <ChevronRight className="w-4 h-4" />
+              {/* SECTION 2: OPERATIONS & MANAGEMENT */}
+              {filteredBusiness.length > 0 && (
+                <div>
+                  <div className="text-[9.5px] font-extrabold tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase mb-2.5 px-0.5">
+                    OPERATIONS &amp; UTILITIES
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-y-3 gap-x-1.5">
+                    {filteredBusiness.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = currentTab === item.id;
+
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            onTabChange(item.id);
+                            onClose();
+                          }}
+                          className="flex flex-col items-center group active:scale-90 transition-transform"
+                        >
+                          {/* Circular CRED icon */}
+                          <div
+                            className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all ${
+                              isActive
+                                ? 'bg-slate-900 text-white dark:bg-white dark:text-black shadow-md ring-2 ring-indigo-500/40'
+                                : 'bg-slate-50 dark:bg-[#141824] text-slate-800 dark:text-slate-200 border border-slate-200/90 dark:border-slate-800 shadow-xs group-hover:border-slate-400'
+                            }`}
+                          >
+                            <Icon className="w-5 h-5 stroke-[1.7]" />
+
+                            {/* Micro badge pill */}
+                            {item.badge ? (
+                              <span
+                                className={`absolute -bottom-1 px-1 py-0.2 rounded-[3px] text-[6.5px] font-black tracking-wider shadow-xs uppercase ${
+                                  item.badgeType === 'pill_dark'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border border-white/20 dark:border-black/20'
+                                }`}
+                              >
+                                {item.badge}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {/* Item Label */}
+                          <span
+                            className={`text-[10px] font-medium tracking-tight text-center mt-1.5 leading-tight ${
+                              isActive
+                                ? 'font-bold text-indigo-600 dark:text-indigo-400'
+                                : 'text-slate-700 dark:text-slate-300'
+                            }`}
+                          >
+                            {item.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Module Grid */}
-              <div className="grid grid-cols-2 gap-2.5">
-                {moreModules.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = currentTab === item.id;
-
-                  return (
-                    <motion.button
-                      key={item.id}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        onTabChange(item.id);
-                        onClose();
-                      }}
-                      className={`relative p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between gap-3 overflow-hidden ${
-                        isActive
-                          ? 'bg-sky-500/10 dark:bg-sky-500/20 border-sky-500/60 ring-2 ring-sky-500/30 shadow-md'
-                          : 'bg-slate-50/80 dark:bg-slate-950/60 border-slate-200/90 dark:border-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-800/50'
-                      }`}
-                    >
-                      {/* Top icon and badge */}
-                      <div className="flex items-center justify-between w-full">
-                        <div className={`p-2.5 rounded-xl bg-gradient-to-br ${item.gradient} border ${item.borderColor} ${item.iconColor}`}>
-                          <Icon className="w-4 h-4" />
-                        </div>
-                        {isActive ? (
-                          <span className="flex items-center gap-1 text-[9.5px] px-2 py-0.5 rounded-full bg-sky-500 text-white font-bold shadow-xs">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Active
-                          </span>
-                        ) : (
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-semibold border ${item.badgeColor}`}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Text details */}
-                      <div>
-                        <div className="font-bold text-xs text-slate-900 dark:text-white leading-tight">
-                          {item.label}
-                        </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-1 font-normal">
-                          {item.desc}
-                        </div>
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
-
-              {/* Theme & Session Control Bar */}
-              <div className="pt-2 grid grid-cols-2 gap-2.5">
-                {/* Theme Toggle Button */}
+              {/* Bottom Actions: Theme & Sign Out */}
+              <div className="pt-1 pb-1 grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={toggleTheme}
-                  className="p-3 rounded-2xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center justify-between active:scale-[0.97] transition-all"
+                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#141824] border border-slate-200/80 dark:border-slate-800 flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-800 dark:text-slate-200 active:scale-95 transition-all shadow-xs"
                 >
-                  <div className="flex items-center gap-2">
-                    {themeMode === 'dark' ? (
-                      <Sun className="w-4 h-4 text-amber-400" />
-                    ) : (
-                      <Moon className="w-4 h-4 text-indigo-500" />
-                    )}
-                    <span className="font-bold">{themeMode === 'dark' ? 'Light' : 'Dark'}</span>
-                  </div>
-                  <span className="text-[9.5px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold uppercase tracking-wider">
-                    {themeMode}
-                  </span>
+                  {themeMode === 'dark' ? (
+                    <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  ) : (
+                    <Moon className="w-3.5 h-3.5 text-indigo-500" />
+                  )}
+                  <span>{themeMode === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
                 </button>
 
-                {/* Logout Button */}
                 <button
                   type="button"
                   onClick={() => {
                     logout();
                     onClose();
                   }}
-                  className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 font-bold text-xs flex items-center justify-center gap-2 active:scale-[0.97] transition-all"
+                  className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 flex items-center justify-center gap-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 active:scale-95 transition-all shadow-xs"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
                 </button>
               </div>
 
-              {/* Developer branding tag & safe bottom spacing */}
-              <div className="text-center pt-2 pb-6 text-[9.5px] font-mono font-extrabold tracking-wider text-slate-400 dark:text-slate-500">
-                POPULAR PAINTS &bull; DEVELOPED BY DEEPAK SAHU
+              {/* Developer Tag */}
+              <div className="text-center pt-0.5 pb-4 text-[8.5px] font-mono font-bold tracking-widest text-slate-400 dark:text-slate-600 uppercase">
+                POPULAR PAINTS &bull; FIELD SALES APP
               </div>
             </div>
           </motion.div>
@@ -332,4 +392,5 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
     </AnimatePresence>
   );
 };
+
 

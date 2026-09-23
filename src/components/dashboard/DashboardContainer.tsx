@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { Header } from '../common/Header';
@@ -58,6 +58,14 @@ export const DashboardContainer: React.FC = () => {
 
   // Pull to refresh states
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Automatically scroll to the top whenever any tab / page changes
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, [currentTab]);
   const [pullY, setPullY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const touchStartY = useRef(0);

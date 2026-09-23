@@ -242,15 +242,15 @@ export const UserManagementModule: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-500/15 to-indigo-500/15 text-blue-600 dark:text-sky-400 border border-blue-300/60 dark:border-blue-700/60 flex items-center gap-1">
-                <Sparkles className="w-2.5 h-2.5 text-blue-500 dark:text-sky-400" />
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-sky-300 border border-blue-300/60 dark:border-blue-700/60 flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5 text-blue-600 dark:text-sky-400" />
                 <span>SUPABASE AUTH &amp; ACCESS CONTROL</span>
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 dark:from-white dark:via-blue-100 dark:to-indigo-200 bg-clip-text text-transparent">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               User &amp; Employee Management
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
               Create and manage sales force IDs, credentials, and roles directly in Supabase
             </p>
           </div>
@@ -285,7 +285,7 @@ export const UserManagementModule: React.FC = () => {
         {/* Total Accounts */}
         <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-white to-indigo-500/5 dark:from-blue-950/40 dark:via-slate-900 dark:to-indigo-950/20 p-3.5 sm:p-4 rounded-3xl border border-blue-200/80 dark:border-blue-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+            <p className="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
               Total Accounts
             </p>
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
@@ -305,7 +305,7 @@ export const UserManagementModule: React.FC = () => {
         {/* Sales Executives */}
         <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500/10 via-white to-teal-500/5 dark:from-emerald-950/40 dark:via-slate-900 dark:to-teal-950/20 p-3.5 sm:p-4 rounded-3xl border border-emerald-200/80 dark:border-emerald-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+            <p className="text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               Sales Executives
             </p>
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/25 shrink-0">
@@ -325,7 +325,7 @@ export const UserManagementModule: React.FC = () => {
         {/* Area Managers */}
         <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-white to-orange-500/5 dark:from-amber-950/40 dark:via-slate-900 dark:to-orange-950/20 p-3.5 sm:p-4 rounded-3xl border border-amber-200/80 dark:border-amber-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent">
+            <p className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
               Area Managers
             </p>
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shadow-md shadow-amber-500/25 shrink-0">
@@ -345,7 +345,7 @@ export const UserManagementModule: React.FC = () => {
         {/* Administrators */}
         <div className="relative overflow-hidden bg-gradient-to-br from-purple-500/10 via-white to-pink-500/5 dark:from-purple-950/40 dark:via-slate-900 dark:to-pink-950/20 p-3.5 sm:p-4 rounded-3xl border border-purple-200/80 dark:border-purple-800/50 shadow-xs flex flex-col justify-between hover:shadow-md transition-all">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] font-black uppercase tracking-wider bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+            <p className="text-[11px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400">
               Administrators
             </p>
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 text-white flex items-center justify-center shadow-md shadow-purple-500/25 shrink-0">

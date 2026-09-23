@@ -72,7 +72,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
   const filteredPlans = useMemo(() => {
     if (!searchTerm.trim()) return morningPlans;
     const term = searchTerm.toLowerCase();
-    return morningPlans.filter(p => 
+    return morningPlans.filter(p =>
       (p?.salesPersonName || '').toLowerCase().includes(term) ||
       (p?.partyName || '').toLowerCase().includes(term) ||
       (p?.city || '').toLowerCase().includes(term) ||
@@ -100,7 +100,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     } else {
       pages.push(1);
       if (validCurrentPage > 3) pages.push('...');
-      
+
       const start = Math.max(2, validCurrentPage - 1);
       const end = Math.min(totalPages - 1, validCurrentPage + 1);
       for (let i = start; i <= end; i++) {
@@ -395,11 +395,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                         setTimeRange(option);
                         setIsTimeDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-1.5 text-[11px] font-medium transition-colors ${
-                        timeRange === option
+                      className={`w-full text-left px-3 py-1.5 text-[11px] font-medium transition-colors ${timeRange === option
                           ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-bold'
                           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
+                        }`}
                     >
                       {option}
                     </button>
@@ -842,11 +841,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
                     <button
                       key={`page-${page}`}
                       onClick={() => handlePageChange(page as number)}
-                      className={`min-w-[24px] h-6 px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        isCurrent
+                      className={`min-w-[24px] h-6 px-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isCurrent
                           ? 'bg-sky-600 text-white shadow-2xs'
                           : 'bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>

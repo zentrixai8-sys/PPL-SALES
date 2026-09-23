@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, AuthState, ToastMessage, MorningPlan, EveningReport, GPSRecord, GPSExcelRecord, AttendanceRecord, Customer, ReferenceRecord, LeaveRecord, AdminNotice } from '../types';
-import { 
-  loginWithGoogleSheet, 
-  saveGPSToSheet, 
-  fetchGPSDataFromSheet, 
-  fetchReferencesFromSheet, 
-  fetchLeavesFromSheet, 
+import {
+  loginWithGoogleSheet,
+  saveGPSToSheet,
+  fetchGPSDataFromSheet,
+  fetchReferencesFromSheet,
+  fetchLeavesFromSheet,
   fetchMorningPlansFromSheet,
   fetchEveningReportsFromSheet,
   deleteSheetRow,
@@ -402,28 +402,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setEveningReports(prev => [report, ...prev]);
   };
 
-    const updateMorningPlan = async (plan: MorningPlan) => {
-      setMorningPlans(prev => prev.map(p => p.id === plan.id ? plan : p));
-      
-      const morningFollowUpArray = [
-        plan.id,
-        plan.meetingDate || '',
-        plan.salesPersonName || '',
-        plan.partyName || '',
-        plan.address || plan.city || '',
-        plan.remarks || plan.purpose || '',
-      ];
+  const updateMorningPlan = async (plan: MorningPlan) => {
+    setMorningPlans(prev => prev.map(p => p.id === plan.id ? plan : p));
 
-      const fullRowArray = [
-        plan.id, plan.salesPersonId, plan.salesPersonName, plan.meetingDate, plan.partyName,
-        plan.contactPerson, plan.mobileNumber, plan.city, plan.purpose, plan.expectedBusiness,
-        plan.priority, plan.remarks, plan.status, plan.createdAt, plan.latitude || '', plan.longitude || '', 
-plan.address || ''
-      ];
+    const morningFollowUpArray = [
+      plan.id,
+      plan.meetingDate || '',
+      plan.salesPersonName || '',
+      plan.partyName || '',
+      plan.address || plan.city || '',
+      plan.remarks || plan.purpose || '',
+    ];
 
-      await updateSheetRow('Morning Follow Up', plan.id, morningFollowUpArray);
-      await updateSheetRow('MorningPlan', plan.id, fullRowArray);
-    };
+    const fullRowArray = [
+      plan.id, plan.salesPersonId, plan.salesPersonName, plan.meetingDate, plan.partyName,
+      plan.contactPerson, plan.mobileNumber, plan.city, plan.purpose, plan.expectedBusiness,
+      plan.priority, plan.remarks, plan.status, plan.createdAt, plan.latitude || '', plan.longitude || '',
+      plan.address || ''
+    ];
+
+    await updateSheetRow('Morning Follow Up', plan.id, morningFollowUpArray);
+    await updateSheetRow('MorningPlan', plan.id, fullRowArray);
+  };
   const deleteMorningPlan = async (id: string): Promise<boolean> => {
     const previous = morningPlans;
     setMorningPlans(prev => prev.filter(p => p.id !== id));
@@ -440,49 +440,49 @@ plan.address || ''
     }
     return primarySuccess;
   };
-    const updateEveningReport = async (report: EveningReport) => {
-      setEveningReports(prev => prev.map(p => p.id === report.id ? report : p));
-      
-      const eveningFollowUpArray = [
-        report.id,
-        report.meetingDate || '',
-        report.salesPersonName || '',
-        report.partyName || '',
-        report.address || '',
-        report.client || '',
-        report.contactNumber || '',
-        report.designation || '',
-        report.remarks || report.discussion || '',
-        report.followUpDate || '',
-        report.attachmentUrls || '',
-      ];
+  const updateEveningReport = async (report: EveningReport) => {
+    setEveningReports(prev => prev.map(p => p.id === report.id ? report : p));
 
-      const fullRowArray = [
-        report.id,
-        report.morningPlanId || '',
-        report.salesPersonId || '',
-        report.salesPersonName || '',
-        report.partyName || '',
-        report.visited || 'Yes',
-        report.meetingTime || '',
-        report.discussion || report.remarks || '',
-        report.productsDiscussed || '',
-        report.requirement || '',
-        report.followUpDate || '',
-        report.expectedOrder || 0,
-        report.orderProbability || 0,
-        report.remarks || '',
-        report.status || 'Completed',
-        report.submittedAt || '',
-        report.photoUrl || '',
-        report.latitude || '',
-        report.longitude || '',
-        report.address || '',
-      ];
+    const eveningFollowUpArray = [
+      report.id,
+      report.meetingDate || '',
+      report.salesPersonName || '',
+      report.partyName || '',
+      report.address || '',
+      report.client || '',
+      report.contactNumber || '',
+      report.designation || '',
+      report.remarks || report.discussion || '',
+      report.followUpDate || '',
+      report.attachmentUrls || '',
+    ];
 
-      await updateSheetRow('Evening Follow Up', report.id, eveningFollowUpArray);
-      await updateSheetRow('EveningReport', report.id, fullRowArray);
-    };
+    const fullRowArray = [
+      report.id,
+      report.morningPlanId || '',
+      report.salesPersonId || '',
+      report.salesPersonName || '',
+      report.partyName || '',
+      report.visited || 'Yes',
+      report.meetingTime || '',
+      report.discussion || report.remarks || '',
+      report.productsDiscussed || '',
+      report.requirement || '',
+      report.followUpDate || '',
+      report.expectedOrder || 0,
+      report.orderProbability || 0,
+      report.remarks || '',
+      report.status || 'Completed',
+      report.submittedAt || '',
+      report.photoUrl || '',
+      report.latitude || '',
+      report.longitude || '',
+      report.address || '',
+    ];
+
+    await updateSheetRow('Evening Follow Up', report.id, eveningFollowUpArray);
+    await updateSheetRow('EveningReport', report.id, fullRowArray);
+  };
   const deleteEveningReport = async (id: string): Promise<boolean> => {
     const previous = eveningReports;
     setEveningReports(prev => prev.filter(p => p.id !== id));

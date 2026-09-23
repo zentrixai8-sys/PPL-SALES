@@ -107,6 +107,11 @@ export interface AttendanceRecord {
   punchOutTime?: string;
   punchInLocation?: string;
   punchOutLocation?: string;
+  punchInAddress?: string;
+  punchOutAddress?: string;
+  punchInPhotoUrl?: string;
+  punchOutPhotoUrl?: string;
+  odometerReading?: string | number;
   status: 'Present' | 'Late' | 'Half Day' | 'Absent';
 }
 

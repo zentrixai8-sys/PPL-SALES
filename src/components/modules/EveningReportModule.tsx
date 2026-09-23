@@ -29,7 +29,9 @@ import {
   Trash2,
   Plane,
   LayoutGrid,
-  List
+  List,
+  Paperclip,
+  UserX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserAvatar } from '../common/UserAvatar';
@@ -395,7 +397,7 @@ export const EveningReportModule: React.FC = () => {
       }
 
       setShowModal(false);
-      
+
       // Update local group details state if modal is open
       if (selectedGroupDetails) {
         setSelectedGroupDetails(prev => {
@@ -658,14 +660,13 @@ export const EveningReportModule: React.FC = () => {
                   {selectedDateFilter === 'ALL'
                     ? 'All Dates'
                     : selectedDateFilter === todayDate
-                    ? `Today (${todayDate})`
-                    : selectedDateFilter}
+                      ? `Today (${todayDate})`
+                      : selectedDateFilter}
                 </span>
               </div>
               <ChevronDown
-                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                  isCalendarOpen ? 'rotate-180 text-sky-500' : ''
-                }`}
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isCalendarOpen ? 'rotate-180 text-sky-500' : ''
+                  }`}
               />
             </button>
 
@@ -738,15 +739,14 @@ export const EveningReportModule: React.FC = () => {
                             setSelectedDateFilter(dateKey);
                             setIsCalendarOpen(false);
                           }}
-                          className={`w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 mx-auto rounded-full text-xs font-semibold flex flex-col items-center justify-center relative transition-all cursor-pointer ${
-                            isSelected
+                          className={`w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 mx-auto rounded-full text-xs font-semibold flex flex-col items-center justify-center relative transition-all cursor-pointer ${isSelected
                               ? 'bg-indigo-600 text-white font-bold shadow-md shadow-indigo-500/30 scale-105 z-10'
                               : isToday
-                              ? 'border-1.5 border-indigo-600 dark:border-indigo-400 text-slate-900 dark:text-white font-bold bg-white dark:bg-slate-900 shadow-xs'
-                              : statusInfo
-                              ? 'bg-slate-100/90 dark:bg-slate-800/70 text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700'
-                              : 'bg-slate-50 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                          }`}
+                                ? 'border-1.5 border-indigo-600 dark:border-indigo-400 text-slate-900 dark:text-white font-bold bg-white dark:bg-slate-900 shadow-xs'
+                                : statusInfo
+                                  ? 'bg-slate-100/90 dark:bg-slate-800/70 text-slate-800 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                  : 'bg-slate-50 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
                           title={`${dateKey}${statusInfo ? ` (${statusInfo.totalCount} entries)` : ''}`}
                         >
                           <span className="leading-none text-[11px] sm:text-xs">{dayNum}</span>
@@ -819,11 +819,10 @@ export const EveningReportModule: React.FC = () => {
             <button
               type="button"
               onClick={() => setLayoutMode('grid')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                layoutMode === 'grid'
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${layoutMode === 'grid'
                   ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
               title="Grid View"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -832,11 +831,10 @@ export const EveningReportModule: React.FC = () => {
             <button
               type="button"
               onClick={() => setLayoutMode('list')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                layoutMode === 'list'
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${layoutMode === 'list'
                   ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
+                }`}
               title="List View"
             >
               <List className="w-3.5 h-3.5" />
@@ -903,8 +901,8 @@ export const EveningReportModule: React.FC = () => {
                       const rowBg = isLeave
                         ? 'bg-rose-500/10 border border-rose-500/30'
                         : isTravel
-                        ? 'bg-purple-500/10 border border-purple-500/30'
-                        : 'bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800';
+                          ? 'bg-purple-500/10 border border-purple-500/30'
+                          : 'bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800';
                       return (
                         <li key={`preview-${item.uid}-${idx}`} className={`flex items-center justify-between text-xs truncate rounded-lg px-2 py-1.5 ${rowBg}`}>
                           <span className={`truncate font-bold flex items-center gap-1.5 ${nameColor}`}>
@@ -972,11 +970,10 @@ export const EveningReportModule: React.FC = () => {
                         </span>
                       </td>
                       <td className="p-3.5">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 ${
-                          group.completedCount === group.totalCompanies && group.totalCompanies > 0
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 ${group.completedCount === group.totalCompanies && group.totalCompanies > 0
                             ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
                             : 'bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-800/60'
-                        }`}>
+                          }`}>
                           {group.completedCount} / {group.totalCompanies} Done
                         </span>
                       </td>
@@ -1074,140 +1071,140 @@ export const EveningReportModule: React.FC = () => {
                     const cardTint = isLeave
                       ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
                       : isTravel
-                      ? 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/30'
-                      : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700';
+                        ? 'bg-purple-50 dark:bg-purple-500/10 border-purple-200 dark:border-purple-500/30'
+                        : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700';
                     const nameColor = isLeave ? 'text-rose-700 dark:text-rose-400' : isTravel ? 'text-purple-700 dark:text-purple-400' : 'text-slate-900 dark:text-white';
                     return (
-                    <div
-                      key={`grp-item-${item.uid}-${idx}`}
-                      className={`p-4 border rounded-2xl space-y-3 transition-colors ${cardTint}`}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
-                            #{item.uid}
-                          </span>
-                          <h4 className={`font-bold text-sm ${nameColor}`}>{item.companyName}</h4>
-                        </div>
+                      <div
+                        key={`grp-item-${item.uid}-${idx}`}
+                        className={`p-4 border rounded-2xl space-y-3 transition-colors ${cardTint}`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-800">
+                              #{item.uid}
+                            </span>
+                            <h4 className={`font-bold text-sm ${nameColor}`}>{item.companyName}</h4>
+                          </div>
 
-                        <div className="flex items-center gap-2">
-                          {isLeave ? (
-                            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold flex items-center gap-1">
-                              <UserX className="w-3 h-3 text-rose-500" />
-                              On Leave
-                            </span>
-                          ) : isTravel ? (
-                            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-bold flex items-center gap-1">
-                              <Plane className="w-3 h-3 text-purple-500" />
-                              Travelling
-                            </span>
-                          ) : item.isUpdated ? (
-                            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3 text-emerald-500" />
-                              Follow Up Saved
-                            </span>
-                          ) : (
-                            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-amber-500" />
-                              Pending Update
-                            </span>
-                          )}
-
-                          <button
-                            onClick={() => openUpdateModal(
-                              item.planObj,
-                              item.reportObj,
-                              item.salesPersonName,
-                              item.companyName,
-                              item.date,
-                              item.uid,
-                              item.address,
-                              item.client,
-                              item.contactNumber,
-                              item.email
+                          <div className="flex items-center gap-2">
+                            {isLeave ? (
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 font-bold flex items-center gap-1">
+                                <UserX className="w-3 h-3 text-rose-500" />
+                                On Leave
+                              </span>
+                            ) : isTravel ? (
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-bold flex items-center gap-1">
+                                <Plane className="w-3 h-3 text-purple-500" />
+                                Travelling
+                              </span>
+                            ) : item.isUpdated ? (
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 font-bold flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3 text-emerald-500" />
+                                Follow Up Saved
+                              </span>
+                            ) : (
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-amber-500" />
+                                Pending Update
+                              </span>
                             )}
-                            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-sky-500/20 flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            <span>{item.isUpdated ? 'Edit Update' : 'Update'}</span>
-                          </button>
-                          {item.isUpdated && item.reportObj && (
+
                             <button
-                              onClick={() => handleDeleteReport(item.reportObj!.id)}
-                              className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 font-bold shadow-xs flex items-center justify-center cursor-pointer transition-colors border border-rose-200 dark:border-rose-900/50"
-                              title="Delete Report"
+                              onClick={() => openUpdateModal(
+                                item.planObj,
+                                item.reportObj,
+                                item.salesPersonName,
+                                item.companyName,
+                                item.date,
+                                item.uid,
+                                item.address,
+                                item.client,
+                                item.contactNumber,
+                                item.email
+                              )}
+                              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-sky-500/20 flex items-center gap-1.5 cursor-pointer"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>{item.isUpdated ? 'Edit Update' : 'Update'}</span>
                             </button>
-                          )}
+                            {item.isUpdated && item.reportObj && (
+                              <button
+                                onClick={() => handleDeleteReport(item.reportObj!.id)}
+                                className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 font-bold shadow-xs flex items-center justify-center cursor-pointer transition-colors border border-rose-200 dark:border-rose-900/50"
+                                title="Delete Report"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Details row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-medium block">Sales Person</span>
+                            <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
+                              <User className="w-3 h-3 text-sky-600 shrink-0" />
+                              <span>{item.salesPersonName || 'N/A'}</span>
+                            </p>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-medium block">Address</span>
+                            <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                              <span>{item.address || 'N/A'}</span>
+                            </p>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-medium block">Client (Contact Person)</span>
+                            <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
+                              <UserCheck className="w-3 h-3 text-sky-600 shrink-0" />
+                              <span>{item.client || 'N/A'}</span>
+                            </p>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-medium block">Contact Number</span>
+                            <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <span>{item.contactNumber || 'N/A'}</span>
+                            </p>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-medium block">Email</span>
+                            <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
+                              <UserCheck className="w-3 h-3 text-sky-500 shrink-0" />
+                              <span>{item.email || 'N/A'}</span>
+                            </p>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-medium block">Designation</span>
+                            <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
+                              <Briefcase className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                              <span>{item.designation || 'N/A'}</span>
+                            </p>
+                          </div>
+
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-medium block">Next Follow Up Date</span>
+                            <p className="text-sky-600 font-bold flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-sky-600 shrink-0" />
+                              <span>{item.nextFollowUpDate || 'Pending'}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {item.remarks && (
+                          <div className="pt-1 text-xs text-slate-600 dark:text-slate-400 italic bg-white dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <strong>Remarks:</strong> "{item.remarks}"
+                          </div>
+                        )}
                       </div>
-
-                      {/* Details row */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-medium block">Sales Person</span>
-                          <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
-                            <User className="w-3 h-3 text-sky-600 shrink-0" />
-                            <span>{item.salesPersonName || 'N/A'}</span>
-                          </p>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-medium block">Address</span>
-                          <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
-                            <span>{item.address || 'N/A'}</span>
-                          </p>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-medium block">Client (Contact Person)</span>
-                          <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
-                            <UserCheck className="w-3 h-3 text-sky-600 shrink-0" />
-                            <span>{item.client || 'N/A'}</span>
-                          </p>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-medium block">Contact Number</span>
-                          <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span>{item.contactNumber || 'N/A'}</span>
-                          </p>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-medium block">Email</span>
-                          <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
-                            <UserCheck className="w-3 h-3 text-sky-500 shrink-0" />
-                            <span>{item.email || 'N/A'}</span>
-                          </p>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-medium block">Designation</span>
-                          <p className="text-slate-800 dark:text-slate-300 font-medium truncate flex items-center gap-1">
-                            <Briefcase className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
-                            <span>{item.designation || 'N/A'}</span>
-                          </p>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-slate-500 font-medium block">Next Follow Up Date</span>
-                          <p className="text-sky-600 font-bold flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-sky-600 shrink-0" />
-                            <span>{item.nextFollowUpDate || 'Pending'}</span>
-                          </p>
-                        </div>
-                      </div>
-
-                      {item.remarks && (
-                        <div className="pt-1 text-xs text-slate-600 dark:text-slate-400 italic bg-white dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                          <strong>Remarks:</strong> "{item.remarks}"
-                        </div>
-                      )}
-                    </div>
                     );
                   })}
                 </div>
@@ -1432,89 +1429,89 @@ export const EveningReportModule: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                <>
-                {/* 3. Address & Client */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Address</label>
-                    <input
-                      type="text"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="e.g. Plot 44, MIDC Industrial Area"
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
-                    />
-                  </div>
+                  <>
+                    {/* 3. Address & Client */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Address</label>
+                        <input
+                          type="text"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          placeholder="e.g. Plot 44, MIDC Industrial Area"
+                          className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
+                        />
+                      </div>
 
-                  <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Client (Contact Person)</label>
-                    <input
-                      type="text"
-                      value={client}
-                      onChange={(e) => setClient(e.target.value)}
-                      placeholder="e.g. Rajesh Mehta"
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
-                    />
-                  </div>
-                </div>
+                      <div>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Client (Contact Person)</label>
+                        <input
+                          type="text"
+                          value={client}
+                          onChange={(e) => setClient(e.target.value)}
+                          placeholder="e.g. Rajesh Mehta"
+                          className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
 
-                {/* 4. Contact Number, Email & Designation */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Contact Number</label>
-                    <input
-                      type="text"
-                      value={contactNumber}
-                      onChange={(e) => setContactNumber(e.target.value)}
-                      placeholder="e.g. +91 98201 12345"
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. name@example.com"
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Designation</label>
-                    <input
-                      type="text"
-                      value={designation}
-                      onChange={(e) => setDesignation(e.target.value)}
-                      placeholder="e.g. Purchase Manager"
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
-                    />
-                  </div>
-                </div>
+                    {/* 4. Contact Number, Email & Designation */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Contact Number</label>
+                        <input
+                          type="text"
+                          value={contactNumber}
+                          onChange={(e) => setContactNumber(e.target.value)}
+                          placeholder="e.g. +91 98201 12345"
+                          className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Email</label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="e.g. name@example.com"
+                          className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Designation</label>
+                        <input
+                          type="text"
+                          value={designation}
+                          onChange={(e) => setDesignation(e.target.value)}
+                          placeholder="e.g. Purchase Manager"
+                          className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
 
-                {/* 5. Remarks */}
-                <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Remarks</label>
-                  <textarea
-                    value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
-                    rows={3}
-                    placeholder="Enter meeting discussion outcome, feedback, or follow-up notes..."
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
-                  />
-                </div>
+                    {/* 5. Remarks */}
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Remarks</label>
+                      <textarea
+                        value={remarks}
+                        onChange={(e) => setRemarks(e.target.value)}
+                        rows={3}
+                        placeholder="Enter meeting discussion outcome, feedback, or follow-up notes..."
+                        className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white"
+                      />
+                    </div>
 
-                {/* 6. Next Follow Up Date */}
-                <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Next Follow Up Date (DD-MM-YYYY)</label>
-                  <input
-                    type="date"
-                    value={convertDDMMYYYYToInputDate(nextFollowUpDate)}
-                    onChange={(e) => setNextFollowUpDate(convertInputDateToDDMMYYYY(e.target.value))}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sky-600 font-bold"
-                  />
-                </div>
-                </>
+                    {/* 6. Next Follow Up Date */}
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Next Follow Up Date (DD-MM-YYYY)</label>
+                      <input
+                        type="date"
+                        value={convertDDMMYYYYToInputDate(nextFollowUpDate)}
+                        onChange={(e) => setNextFollowUpDate(convertInputDateToDDMMYYYY(e.target.value))}
+                        className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sky-600 font-bold"
+                      />
+                    </div>
+                  </>
                 )}
 
                 {/* 7. Attachments */}
