@@ -613,11 +613,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
         {/* Right Card: Popular Paints Branded Promo Banner (3 Cols) */}
         <motion.div
           variants={itemVariants}
-          className="lg:col-span-3 p-4 rounded-2xl relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 border border-indigo-900/50 shadow-xs flex flex-col justify-between text-white group"
+          className="lg:col-span-3 p-4 rounded-2xl relative overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-950 to-slate-900 border border-blue-700/40 shadow-md flex flex-col justify-between text-white group"
         >
           {/* Subtle Background Glow */}
-          <div className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
-          <div className="pointer-events-none absolute -bottom-10 -left-10 w-32 h-32 bg-sky-500/20 rounded-full blur-2xl" />
+          <div className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 bg-sky-500/25 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
+          <div className="pointer-events-none absolute -bottom-10 -left-10 w-32 h-32 bg-blue-600/25 rounded-full blur-2xl" />
 
           {/* Top text */}
           <div className="relative z-10 space-y-1">
@@ -625,32 +625,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
               <Sparkles className="w-3 h-3" />
               <span>Premium Quality</span>
             </div>
-            <h3 className="text-sm sm:text-base font-black italic tracking-tight font-serif text-slate-100">
+            <h3 className="text-sm sm:text-base font-black tracking-tight text-white">
               Better Coverage,<br />Brighter Future
             </h3>
-            <p className="text-[10px] text-slate-300 line-clamp-2">
+            <p className="text-[10.5px] text-slate-200 line-clamp-2 leading-relaxed">
               Together we paint a more colourful tomorrow.
             </p>
           </div>
 
-          {/* Paint Buckets Promo Image / Logo */}
-          <div className="relative z-10 pt-3 mt-2 flex items-center justify-between border-t border-white/10">
+          {/* Paint Buckets Promo Image Featured Inside Blue Container */}
+          <div className="relative z-10 my-3 rounded-xl overflow-hidden shadow-lg border border-white/20 bg-slate-950/40 h-28 sm:h-32 w-full">
+            <img
+              src="/paint_buckets_promo.jpg"
+              alt="Popular Paints - Premium Quality"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-transparent pointer-events-none" />
+          </div>
+
+          {/* Footer Branding */}
+          <div className="relative z-10 pt-2 flex items-center justify-between border-t border-white/15">
             <img
               src="/popular_paints_logo.png"
               alt="Popular Paints"
-              className="h-6 w-auto object-contain brightness-0 invert opacity-90"
+              className="h-6 w-auto object-contain brightness-0 invert opacity-95"
               onError={(e) => {
-                // Fallback text if logo fails to render
                 (e.currentTarget as HTMLElement).style.display = 'none';
               }}
             />
-            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md border border-white/20">
-              <img
-                src="/paint_buckets_promo.jpg"
-                alt="Paints"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-            </div>
+            <span className="text-[10px] font-bold text-sky-300 tracking-wider uppercase font-mono">
+              ISO Certified
+            </span>
           </div>
         </motion.div>
       </motion.div>
