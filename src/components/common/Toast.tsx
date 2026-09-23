@@ -163,7 +163,7 @@ export const ToastContainer: React.FC = () => {
   return (
     <div 
       aria-live="polite"
-      className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-[320px] sm:max-w-[340px] w-[calc(100vw-2rem)] pointer-events-none"
+      className="fixed top-16 sm:top-5 right-3 sm:right-5 left-3 sm:left-auto z-[9999] flex flex-col gap-2 max-w-[340px] sm:w-[340px] mx-auto sm:mx-0 pointer-events-none"
     >
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (

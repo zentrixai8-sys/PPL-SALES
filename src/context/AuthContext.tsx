@@ -108,10 +108,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Theme Mode State ('dark' or 'light')
+  // Theme Mode State ('dark' or 'light') - Default to Light
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
     const savedTheme = localStorage.getItem('sales_theme');
-    return (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark';
+    return savedTheme === 'dark' ? 'dark' : 'light';
   });
 
   useEffect(() => {
@@ -263,27 +263,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('sales_leaves', JSON.stringify(leaveRecords));
   }, [leaveRecords]);
 
-  // Read saved user on load
+  // Read saved user on load with strict validation
   useEffect(() => {
     try {
       const savedUserStr = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
       if (savedUserStr) {
         const savedUser: User = JSON.parse(savedUserStr);
-        setAuthState({
-          user: savedUser,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-      } else {
-        setAuthState({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-          error: null,
-        });
+        if (savedUser && typeof savedUser === 'object' && savedUser.id && savedUser.userName && savedUser.role) {
+          setAuthState({
+            user: savedUser,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+          return;
+        } else {
+          // Corrupted or invalid user state - clear it
+          localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
+        }
       }
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+      });
     } catch {
+      localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
       setAuthState({
         user: null,
         isAuthenticated: false,

@@ -106,18 +106,18 @@ export const Header: React.FC<HeaderProps> = ({
     }));
 
   return (
-    <header className="sticky top-0 z-30 min-h-[4.75rem] lg:min-h-16 pt-[max(env(safe-area-inset-top,0px),34px)] lg:pt-0 pb-3 lg:pb-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-4 md:px-6 flex items-center justify-between text-slate-800 dark:text-slate-100 transition-colors shadow-xs">
+    <header className="sticky top-0 z-30 min-h-[3.6rem] lg:min-h-16 pt-[max(env(safe-area-inset-top,0px),12px)] lg:pt-0 pb-2.5 lg:pb-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 px-3.5 md:px-6 flex items-center justify-between text-slate-800 dark:text-slate-100 transition-colors shadow-xs">
       {/* Left section: Mobile Brand / Tab title vs Desktop Hamburger & Live Status */}
-      <div className="flex items-center gap-2.5 md:gap-3.5">
+      <div className="flex items-center gap-2 md:gap-3.5 min-w-0">
         {/* Mobile View App Header Left */}
-        <div className="flex lg:hidden items-center gap-2.5">
+        <div className="flex lg:hidden items-center gap-2 min-w-0">
           <img
             src={themeMode === 'light' ? '/popular_paints_logo_dark.png' : '/popular_paints_logo.png'}
             alt="Popular Paints"
-            className="h-8 w-auto object-contain shrink-0"
+            className="h-7 w-auto object-contain shrink-0"
           />
-          <div className="h-5 w-[1.5px] bg-slate-300 dark:bg-slate-700" />
-          <span className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[150px] sm:max-w-[220px]">
+          <div className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700 shrink-0" />
+          <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[110px] sm:max-w-[180px]">
             {TAB_TITLES[currentTab] || 'Sales Portal'}
           </span>
         </div>
@@ -145,7 +145,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right Section: Notifications, Theme Switcher & User Profile */}
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
