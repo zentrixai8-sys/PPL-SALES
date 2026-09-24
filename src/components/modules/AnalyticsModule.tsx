@@ -57,7 +57,8 @@ interface RepPerformance {
 }
 
 export const AnalyticsModule: React.FC = () => {
-  const { user, morningPlans: rawMorningPlans = [], eveningReports: rawEveningReports = [], themeMode } = useAuth();
+  const { authState, morningPlans: rawMorningPlans = [], eveningReports: rawEveningReports = [], themeMode } = useAuth();
+  const user = authState.user;
   const isAdmin = user?.role === 'Admin';
   const userSalesName = user?.userName || user?.name || '';
   const mySalesNameLower = userSalesName.toLowerCase().trim();

@@ -685,30 +685,32 @@ export async function saveGPSToSheet(record: Omit<GPSRecord, 'id'>): Promise<GPS
 }
 
 /**
- * Save GPS Excel rows to Supabase 'gps_records' table.
+ * Save GPS Excel rows to Supabase 'gps_excel_records' table.
  */
 export async function saveGPSExcelRowsToSheet(records: GPSExcelRecord[]): Promise<boolean> {
   if (!isSupabaseConfigured) return false;
 
   try {
-    const rows = records.map((rec, i) => {
-      const parsedDate = parseUniversalDate(rec.resultDate);
-      const formattedDate = parsedDate ? formatToDDMMYYYYHHMM(parsedDate) : (rec.resultDate || getIndianDateString());
-      return {
-        id: `GPS-EXCEL-${Date.now()}-${i}`,
-        sales_person_id: rec.deviceNumber || 'EXCEL',
-        sales_person_name: rec.resourceName || rec.recipientCustomerName || 'Field Agent',
-        latitude: Number(rec.latitude) || 0,
-        longitude: Number(rec.longitude) || 0,
-        address: rec.address || '',
-        date: formattedDate,
-        time: parsedDate ? getIndianTimeString(parsedDate) : getIndianTimeString(),
-        accuracy: Number(rec.accuracy) || 10,
-        action_source: rec.type || 'Excel Import',
-      };
-    });
+    const toNumOrNull = (v: string | number | undefined) =>
+      v === undefined || v === null || v === '' || isNaN(Number(v)) ? null : Number(v);
 
-    const { error } = await supabase.from('gps_records').insert(rows);
+    const rows = records.map(rec => ({
+      transporter_name: rec.transporterName || '',
+      recipient_customer_name: rec.recipientCustomerName || '',
+      vehicle_number: rec.vehicleNumber || '',
+      resource_name: rec.resourceName || '',
+      device_number: rec.deviceNumber || '',
+      result_date: rec.resultDate || '',
+      address: rec.address || '',
+      latitude: toNumOrNull(rec.latitude),
+      longitude: toNumOrNull(rec.longitude),
+      accuracy: toNumOrNull(rec.accuracy),
+      distance: toNumOrNull(rec.distance),
+      status: rec.status || '',
+      type: rec.type || '',
+    }));
+
+    const { error } = await supabase.from('gps_excel_records').insert(rows);
     if (error) {
       console.error('Error inserting GPS excel rows to Supabase:', error);
       return false;
@@ -721,7 +723,27 @@ export async function saveGPSExcelRowsToSheet(records: GPSExcelRecord[]): Promis
 }
 
 /**
- * Fetch GPS records from Supabase 'gps_records' table.
+ * Clear all rows from Supabase 'gps_excel_records' table.
+ */
+export async function clearGPSExcelRowsFromSheet(): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+
+  try {
+    const { error } = await supabase.from('gps_excel_records').delete().not('id', 'is', null);
+    if (error) {
+      console.error('Error clearing GPS excel records in Supabase:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Error clearing GPS excel records:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetch GPS records from Supabase 'gps_records' (live pings) and
+ * 'gps_excel_records' (Excel-uploaded rows) tables.
  */
 export async function fetchGPSDataFromSheet(): Promise<{
   liveRecords: GPSRecord[];
@@ -740,10 +762,7 @@ export async function fetchGPSDataFromSheet(): Promise<{
 
     if (error) {
       console.error('Error fetching GPS records from Supabase:', error);
-      return { liveRecords, excelRecords };
-    }
-
-    if (data && Array.isArray(data)) {
+    } else if (data && Array.isArray(data)) {
       data.forEach((d: any) => {
         liveRecords.push({
           id: d.id,
@@ -761,6 +780,38 @@ export async function fetchGPSDataFromSheet(): Promise<{
     }
   } catch (err) {
     console.error('Could not fetch GPS data from Supabase:', err);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('gps_excel_records')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching GPS excel records from Supabase:', error);
+    } else if (data && Array.isArray(data)) {
+      data.forEach((d: any) => {
+        excelRecords.push({
+          id: d.id,
+          transporterName: d.transporter_name || '',
+          recipientCustomerName: d.recipient_customer_name || '',
+          vehicleNumber: d.vehicle_number || '',
+          resourceName: d.resource_name || '',
+          deviceNumber: d.device_number || '',
+          resultDate: d.result_date || '',
+          address: d.address || '',
+          latitude: d.latitude ?? '',
+          longitude: d.longitude ?? '',
+          accuracy: d.accuracy ?? '',
+          distance: d.distance ?? '',
+          status: d.status || '',
+          type: d.type || '',
+        });
+      });
+    }
+  } catch (err) {
+    console.error('Could not fetch GPS excel records from Supabase:', err);
   }
 
   return { liveRecords, excelRecords };

@@ -257,3 +257,40 @@ ALTER TABLE public.users ADD COLUMN IF NOT EXISTS work_status TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS kyc_status TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS bank_account TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS pf_uan TEXT;
+
+-- ==============================================================================
+-- 11. GPS EXCEL RECORDS TABLE
+-- Excel-uploaded GPS rows (transporter/vehicle/device tracking pings) were
+-- previously written into public.gps_records, which only has columns for live
+-- check-ins (sales_person_id/name, lat, lng, date, time) — so transporter name,
+-- recipient customer, vehicle number, device number, distance, status, and type
+-- were silently dropped on every upload, and the read path never restored them
+-- (src/services/api.ts fetchGPSDataFromSheet left excelRecords empty). This
+-- table stores the full Excel row so uploads persist and sync across devices
+-- instead of living only in that browser's localStorage.
+-- This table already exists on the live project — this block documents the
+-- schema in use (mirrors it, id/column types match) and is safe to re-run.
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.gps_excel_records (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    transporter_name TEXT,
+    recipient_customer_name TEXT,
+    vehicle_number TEXT,
+    resource_name TEXT,
+    device_number TEXT,
+    result_date TEXT,
+    address TEXT,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    accuracy DOUBLE PRECISION,
+    distance DOUBLE PRECISION,
+    status TEXT,
+    type TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_gps_excel_records_device ON public.gps_excel_records (device_number);
+
+ALTER TABLE public.gps_excel_records ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow all operations for anon on gps_excel_records" ON public.gps_excel_records FOR ALL USING (true) WITH CHECK (true);

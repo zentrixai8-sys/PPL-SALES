@@ -4,6 +4,7 @@ export interface User {
   id: string;
   password?: string;
   userName: string;
+  name?: string;
   role: UserRole;
   gmail: string;
   manager: string;

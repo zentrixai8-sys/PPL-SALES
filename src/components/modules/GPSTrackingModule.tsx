@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { GPSExcelRecord } from '../../types';
 import { saveGPSExcelRowsToSheet } from '../../services/api';
-import { getIndianDateString, parseUniversalDate, formatToDDMMYYYYHHMM } from '../../utils/dateUtils';
+import { getIndianDateString, parseUniversalDate, parseDDMMYYYYToDate, formatToDDMMYYYYHHMM, convertDDMMYYYYToInputDate, convertInputDateToDDMMYYYY } from '../../utils/dateUtils';
 import {
   Navigation,
   MapPin,
@@ -146,8 +146,8 @@ export const GPSTrackingModule: React.FC = () => {
   const [selectedSalesPerson, setSelectedSalesPerson] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [mobileFilter, setMobileFilter] = useState('');
-  const [dateFrom, setDateFrom] = useState(getIndianDateString());
-  const [dateTo, setDateTo] = useState(getIndianDateString());
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [isConfirmingClear, setIsConfirmingClear] = useState(false);
 
   // Auto Refresh GPS Sheet Data on Mount
@@ -434,17 +434,15 @@ export const GPSTrackingModule: React.FC = () => {
         matchesDateRange = false;
       } else {
         const recDateOnly = new Date(recDate.getFullYear(), recDate.getMonth(), recDate.getDate()).getTime();
-        
+
         if (dateFrom) {
-          const [y, m, d] = dateFrom.split('-');
-          const fromDate = new Date(Number(y), Number(m) - 1, Number(d)).getTime();
-          if (recDateOnly < fromDate) matchesDateRange = false;
+          const fromDate = parseDDMMYYYYToDate(dateFrom)?.getTime();
+          if (fromDate !== undefined && recDateOnly < fromDate) matchesDateRange = false;
         }
-        
+
         if (dateTo) {
-          const [y, m, d] = dateTo.split('-');
-          const toDate = new Date(Number(y), Number(m) - 1, Number(d)).getTime();
-          if (recDateOnly > toDate) matchesDateRange = false;
+          const toDate = parseDDMMYYYYToDate(dateTo)?.getTime();
+          if (toDate !== undefined && recDateOnly > toDate) matchesDateRange = false;
         }
       }
     }
@@ -704,8 +702,8 @@ export const GPSTrackingModule: React.FC = () => {
                   <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
+                    value={dateFrom ? convertDDMMYYYYToInputDate(dateFrom) : ''}
+                    onChange={(e) => setDateFrom(convertInputDateToDDMMYYYY(e.target.value))}
                     style={{ colorScheme: themeMode === 'dark' ? 'dark' : 'light' }}
                     className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
@@ -721,8 +719,8 @@ export const GPSTrackingModule: React.FC = () => {
                   <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
+                    value={dateTo ? convertDDMMYYYYToInputDate(dateTo) : ''}
+                    onChange={(e) => setDateTo(convertInputDateToDDMMYYYY(e.target.value))}
                     style={{ colorScheme: themeMode === 'dark' ? 'dark' : 'light' }}
                     className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
                   />
@@ -892,8 +890,8 @@ export const GPSTrackingModule: React.FC = () => {
                   <Calendar className="w-4 h-4 text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="date"
-                    value={dateFrom}
-                    onChange={(e) => { setDateFrom(e.target.value); setDateTo(e.target.value); }}
+                    value={dateFrom ? convertDDMMYYYYToInputDate(dateFrom) : ''}
+                    onChange={(e) => { const ddmmyyyy = convertInputDateToDDMMYYYY(e.target.value); setDateFrom(ddmmyyyy); setDateTo(ddmmyyyy); }}
                     style={{ colorScheme: themeMode === 'dark' ? 'dark' : 'light' }}
                     className="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
                   />

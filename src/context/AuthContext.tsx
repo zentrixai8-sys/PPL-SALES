@@ -4,6 +4,7 @@ import {
   loginWithGoogleSheet,
   saveGPSToSheet,
   fetchGPSDataFromSheet,
+  clearGPSExcelRowsFromSheet,
   fetchReferencesFromSheet,
   fetchLeavesFromSheet,
   fetchMorningPlansFromSheet,
@@ -516,15 +517,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearGPSExcelRecords = async () => {
     setGpsExcelRecords([]);
     try {
-      const params = new URLSearchParams();
-      params.append('sheetName', 'GPS');
-      params.append('action', 'clear');
-      await fetch('https://script.google.com/macros/s/AKfycbyhXWGagj_RY-JEkrNaKA2aNjiSlAOJDEYau6Hm7tCfQ4t7Y03aGZBhgkPWfJrslFrdZg/exec', {
-        method: 'POST',
-        body: params,
-      });
+      await clearGPSExcelRowsFromSheet();
     } catch (err) {
-      console.error('Error clearing sheet:', err);
+      console.error('Error clearing GPS excel records:', err);
     }
   };
 
