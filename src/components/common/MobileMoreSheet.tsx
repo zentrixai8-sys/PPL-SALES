@@ -42,21 +42,25 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
 
   // Group 1: Daily Quick Actions / For You
   const forYouModules = [
-    {
-      id: 'gps_tracking' as NavigationTab,
-      label: 'gps live',
-      subtext: 'live tracking',
-      icon: Navigation,
-      badge: 'LIVE',
-      badgeType: 'red_dot',
-    },
+    ...(user?.role === 'Admin'
+      ? [
+          {
+            id: 'gps_tracking' as NavigationTab,
+            label: 'gps live',
+            subtext: 'live tracking',
+            icon: Navigation,
+            badge: 'LIVE',
+            badgeType: 'red_dot' as const,
+          },
+        ]
+      : []),
     {
       id: 'references' as NavigationTab,
       label: 'references',
       subtext: 'dealer leads',
       icon: UserPlus,
       badge: 'LEADS',
-      badgeType: 'pill',
+      badgeType: 'pill' as const,
     },
     {
       id: 'grievances' as NavigationTab,
@@ -64,7 +68,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
       subtext: 'support tickets',
       icon: ShieldAlert,
       badge: 'TICKETS',
-      badgeType: 'pill',
+      badgeType: 'pill' as const,
     },
     {
       id: 'reports' as NavigationTab,
@@ -72,7 +76,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
       subtext: 'excel sheets',
       icon: FileSpreadsheet,
       badge: 'EXCEL',
-      badgeType: 'pill',
+      badgeType: 'pill' as const,
     },
   ];
 

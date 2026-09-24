@@ -535,8 +535,10 @@ export const GrievanceModule: React.FC = () => {
 
   // Filtered Tickets
   const filteredTickets = tickets.filter(t => {
-    // If not Admin/Manager, show tickets raised by this salesperson (or all if team sharing)
-    const matchesUser = isAdminOrManager ? true : (t.salesPersonId === user?.id || t.salesPersonName === user?.userName || true);
+    // If not Admin/Manager, show only tickets raised by or assigned to this salesperson
+    const matchesUser = isAdminOrManager
+      ? true
+      : (t.salesPersonId === user?.id || (t.salesPersonName || '').toLowerCase().trim().includes((user?.userName || user?.name || '').toLowerCase().trim()));
     
     const matchesTab = activeTab === 'All' ? true : t.status === activeTab;
     const matchesCategory = categoryFilter === 'All' ? true : t.category === categoryFilter;

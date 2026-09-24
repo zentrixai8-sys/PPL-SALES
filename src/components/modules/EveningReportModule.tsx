@@ -453,10 +453,20 @@ export const EveningReportModule: React.FC = () => {
     }> = [];
 
     const processedUids = new Set<string>();
+    const isSalesUser = user?.role !== 'Admin';
+    const myName = (user?.userName || user?.name || '').toLowerCase().trim();
 
     // First map all Morning Plans
     morningPlans.forEach(plan => {
       if (!plan || !plan.id) return;
+
+      // Sales ID data restriction
+      if (isSalesUser && myName) {
+        const planPerson = (plan.salesPersonName || '').toLowerCase().trim();
+        if (planPerson && !planPerson.includes(myName) && !myName.includes(planPerson)) {
+          return;
+        }
+      }
 
       // Find matching evening report if available
       const matchedReport = eveningReports.find(
@@ -494,6 +504,14 @@ export const EveningReportModule: React.FC = () => {
         return;
       }
 
+      // Sales ID data restriction
+      if (isSalesUser && myName) {
+        const reportPerson = (report.salesPersonName || '').toLowerCase().trim();
+        if (reportPerson && !reportPerson.includes(myName) && !myName.includes(reportPerson)) {
+          return;
+        }
+      }
+
       list.push({
         uid: report.morningPlanId || report.id,
         date: report.meetingDate || getIndianDateString(),
@@ -512,7 +530,7 @@ export const EveningReportModule: React.FC = () => {
     });
 
     return list;
-  }, [morningPlans, eveningReports]);
+  }, [morningPlans, eveningReports, user]);
 
   // Group items Sales Person-wise
   const groupedBySalesPerson = useMemo(() => {

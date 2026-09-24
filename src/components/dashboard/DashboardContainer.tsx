@@ -151,7 +151,11 @@ export const DashboardContainer: React.FC = () => {
       case 'evening_report':
         return <EveningReportModule />;
       case 'gps_tracking':
-        return <GPSTrackingModule />;
+        return role === 'Admin' ? (
+          <GPSTrackingModule />
+        ) : (
+          <SalesDashboard onNavigate={setCurrentTab} />
+        );
       case 'customers':
         return <CustomersModule />;
       case 'reports':

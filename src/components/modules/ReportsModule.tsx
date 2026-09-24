@@ -80,7 +80,9 @@ const ReportCustomSelect: React.FC<ReportCustomSelectProps> = ({ value, onChange
 };
 
 export const ReportsModule: React.FC = () => {
-  const { morningPlans, eveningReports, showToast, themeMode } = useAuth();
+  const { authState, morningPlans, eveningReports, showToast, themeMode } = useAuth();
+  const user = authState.user;
+  const isAdmin = user?.role === 'Admin';
 
   // Filters
   const [reportType, setReportType] = useState('Daily');
@@ -92,15 +94,41 @@ export const ReportsModule: React.FC = () => {
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
 
+  const userSalesName = user?.userName || user?.name || '';
+  const mySalesNameLower = userSalesName.toLowerCase().trim();
+
+  // Scope plans & reports to current sales rep if not Admin
+  const scopedMorningPlans = useMemo(() => {
+    if (isAdmin || !userSalesName) return morningPlans;
+    return morningPlans.filter(p => {
+      const pName = (p.salesPersonName || '').toLowerCase().trim();
+      return pName === mySalesNameLower || (mySalesNameLower && pName.includes(mySalesNameLower)) || (mySalesNameLower && mySalesNameLower.includes(pName));
+    });
+  }, [morningPlans, isAdmin, userSalesName, mySalesNameLower]);
+
+  const scopedEveningReports = useMemo(() => {
+    if (isAdmin || !userSalesName) return eveningReports;
+    return eveningReports.filter(r => {
+      const rName = (r.salesPersonName || '').toLowerCase().trim();
+      return rName === mySalesNameLower || (mySalesNameLower && rName.includes(mySalesNameLower)) || (mySalesNameLower && mySalesNameLower.includes(rName));
+    });
+  }, [eveningReports, isAdmin, userSalesName, mySalesNameLower]);
+
   // Collect unique filter choices
-  const salesPersons = Array.from(new Set(morningPlans.map(p => p.salesPersonName)));
-  const cities = Array.from(new Set(morningPlans.map(p => p.city)));
+  const salesPersons = useMemo(() => {
+    if (!isAdmin && user) {
+      return [user.userName || user.name || 'Sales Rep'];
+    }
+    return Array.from(new Set(scopedMorningPlans.map(p => p.salesPersonName)));
+  }, [scopedMorningPlans, isAdmin, user]);
+
+  const cities = Array.from(new Set(scopedMorningPlans.map(p => p.city)));
 
   // Combine reports and morning plans for report view
   const processedReportIds = new Set<string>();
-  const combinedData = morningPlans.map(plan => {
-    const report = eveningReports.find(r => r.morningPlanId === plan.id) ||
-      eveningReports.find(r =>
+  const combinedData = scopedMorningPlans.map(plan => {
+    const report = scopedEveningReports.find(r => r.morningPlanId === plan.id) ||
+      scopedEveningReports.find(r =>
         r.partyName === plan.partyName &&
         (r.meetingDate === plan.meetingDate || r.meetingDate === getIndianDateString(plan.meetingDate)) &&
         r.salesPersonId === plan.salesPersonId
@@ -136,7 +164,7 @@ export const ReportsModule: React.FC = () => {
   // Evening entries submitted without a linked Morning Plan (e.g. "New Evening Entry") were being
   // dropped from the report entirely since only morningPlans was iterated above — add them here so
   // every updated follow-up, on any date, still shows up in the table/export.
-  eveningReports.forEach(report => {
+  scopedEveningReports.forEach(report => {
     if (!report || !report.id) return;
     if (processedReportIds.has(report.id) || (report.morningPlanId && processedReportIds.has(report.morningPlanId))) return;
 

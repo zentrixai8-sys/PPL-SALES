@@ -311,6 +311,15 @@ export const TargetModule: React.FC = () => {
 
   // Filter targets
   const filteredTargets = targets.filter(t => {
+    // Sales ID data restriction: only see own target
+    if (user?.role !== 'Admin') {
+      const myName = (user?.userName || user?.name || '').toLowerCase().trim();
+      const targetPerson = (t.salesPersonName || '').toLowerCase().trim();
+      if (myName && targetPerson && !targetPerson.includes(myName) && !myName.includes(targetPerson)) {
+        return false;
+      }
+    }
+
     const formattedMonth = formatMonthDisplay(t.month);
     const matchesSearch =
       t.salesPersonName.toLowerCase().includes(searchTerm.toLowerCase()) ||

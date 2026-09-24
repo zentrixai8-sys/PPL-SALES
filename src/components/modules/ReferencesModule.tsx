@@ -223,6 +223,16 @@ export const ReferencesModule: React.FC = () => {
 
   // Filtered References
   const filteredReferences = references.filter(ref => {
+    // Sales ID data restriction
+    if (authState.user?.role !== 'Admin') {
+      const myName = (authState.user?.userName || authState.user?.name || '').toLowerCase().trim();
+      const allottedTo = (ref.allottedToSalesPersonName || '').toLowerCase().trim();
+      const givenBy = (ref.refGivenBy || '').toLowerCase().trim();
+      if (myName && !allottedTo.includes(myName) && !myName.includes(allottedTo) && !givenBy.includes(myName)) {
+        return false;
+      }
+    }
+
     const matchesSearch =
       (ref.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (ref.companyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -88,7 +88,13 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onNavigate }) =>
       return morningPlans;
     }
     // Sales person: only their own
-    return morningPlans.filter(p => p.salesPersonId === user?.id || p.salesPersonName === user?.userName);
+    const myName = (user?.userName || user?.name || '').toLowerCase().trim();
+    const myId = (user?.id || '').toLowerCase().trim();
+    return morningPlans.filter(p => {
+      const pId = (p.salesPersonId || '').toLowerCase().trim();
+      const pName = (p.salesPersonName || '').toLowerCase().trim();
+      return (myId && pId === myId) || (myName && (pName === myName || pName.includes(myName) || myName.includes(pName)));
+    });
   }, [isAdmin, isManager, morningPlans, teamUsers, teamMemberNames, teamMemberIds, user]);
 
   const userReports = useMemo(() => {
@@ -102,7 +108,13 @@ export const SalesDashboard: React.FC<SalesDashboardProps> = ({ onNavigate }) =>
       }
       return eveningReports;
     }
-    return eveningReports.filter(r => r.salesPersonId === user?.id || r.salesPersonName === user?.userName);
+    const myName = (user?.userName || user?.name || '').toLowerCase().trim();
+    const myId = (user?.id || '').toLowerCase().trim();
+    return eveningReports.filter(r => {
+      const rId = (r.salesPersonId || '').toLowerCase().trim();
+      const rName = (r.salesPersonName || '').toLowerCase().trim();
+      return (myId && rId === myId) || (myName && (rName === myName || rName.includes(myName) || myName.includes(rName)));
+    });
   }, [isAdmin, isManager, eveningReports, teamUsers, teamMemberNames, teamMemberIds, user]);
 
   const pendingVisits = userPlans.length - userReports.length;

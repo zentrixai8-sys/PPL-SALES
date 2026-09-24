@@ -73,7 +73,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'morning_plan', label: 'Morning Follow up', icon: Sun, color: 'from-amber-500 to-orange-500' },
         { id: 'evening_report', label: 'Evening Report', icon: Moon, color: 'from-indigo-500 to-sky-500' },
-        { id: 'gps_tracking', label: 'GPS Tracking', icon: Navigation, color: 'from-emerald-500 to-teal-500' },
+        ...(isAdmin
+          ? [{ id: 'gps_tracking' as NavigationTab, label: 'GPS Tracking', icon: Navigation, color: 'from-emerald-500 to-teal-500' }]
+          : []),
       ],
     },
     {

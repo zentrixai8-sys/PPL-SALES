@@ -57,7 +57,27 @@ interface RepPerformance {
 }
 
 export const AnalyticsModule: React.FC = () => {
-  const { morningPlans = [], eveningReports = [], themeMode } = useAuth();
+  const { user, morningPlans: rawMorningPlans = [], eveningReports: rawEveningReports = [], themeMode } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+  const userSalesName = user?.userName || user?.name || '';
+  const mySalesNameLower = userSalesName.toLowerCase().trim();
+
+  const morningPlans = useMemo(() => {
+    if (isAdmin || !userSalesName) return rawMorningPlans;
+    return rawMorningPlans.filter(p => {
+      const pName = (p.salesPersonName || '').toLowerCase().trim();
+      return pName === mySalesNameLower || (mySalesNameLower && pName.includes(mySalesNameLower)) || (mySalesNameLower && mySalesNameLower.includes(pName));
+    });
+  }, [rawMorningPlans, isAdmin, userSalesName, mySalesNameLower]);
+
+  const eveningReports = useMemo(() => {
+    if (isAdmin || !userSalesName) return rawEveningReports;
+    return rawEveningReports.filter(r => {
+      const rName = (r.salesPersonName || '').toLowerCase().trim();
+      return rName === mySalesNameLower || (mySalesNameLower && rName.includes(mySalesNameLower)) || (mySalesNameLower && mySalesNameLower.includes(rName));
+    });
+  }, [rawEveningReports, isAdmin, userSalesName, mySalesNameLower]);
+
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'performance' | 'charts'>('leaderboard');
 
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

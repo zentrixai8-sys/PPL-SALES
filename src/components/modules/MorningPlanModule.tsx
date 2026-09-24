@@ -322,8 +322,20 @@ export const MorningPlanModule: React.FC = () => {
   // Filter plans based on date and search term, with strict deduplication by ID
   const filteredPlans = useMemo(() => {
     const map = new Map<string, MorningPlan>();
+    const isSalesUser = user?.role !== 'Admin';
+    const myName = (user?.userName || user?.name || '').toLowerCase().trim();
+
     morningPlans.forEach(p => {
       if (!p || !p.id) return;
+
+      // Sales ID data restriction: only see own records
+      if (isSalesUser && myName) {
+        const planPerson = (p.salesPersonName || '').toLowerCase().trim();
+        if (planPerson && !planPerson.includes(myName) && !myName.includes(planPerson)) {
+          return;
+        }
+      }
+
       const matchesDate =
         selectedDateFilter === 'ALL' ||
         !selectedDateFilter ||
@@ -344,7 +356,7 @@ export const MorningPlanModule: React.FC = () => {
     });
 
     return Array.from(map.values());
-  }, [morningPlans, selectedDateFilter, searchTerm]);
+  }, [morningPlans, selectedDateFilter, searchTerm, user]);
 
   // Group filtered plans by Sales Person Name
   const groupedBySalesPerson: SalesPersonSummaryGroup[] = useMemo(() => {
@@ -376,8 +388,20 @@ export const MorningPlanModule: React.FC = () => {
   // Map of meetingDate -> status indicators (Plan, Actual, Leave, Travel)
   const dateStatusMap = useMemo(() => {
     const map: Record<string, { hasPlan: boolean; hasActual: boolean; hasLeave: boolean; hasTravel: boolean; totalCount: number }> = {};
+    const isSalesUser = user?.role !== 'Admin';
+    const myName = (user?.userName || user?.name || '').toLowerCase().trim();
+
     morningPlans.forEach(p => {
       if (!p || !p.meetingDate) return;
+
+      // Sales ID data restriction
+      if (isSalesUser && myName) {
+        const planPerson = (p.salesPersonName || '').toLowerCase().trim();
+        if (planPerson && !planPerson.includes(myName) && !myName.includes(planPerson)) {
+          return;
+        }
+      }
+
       if (!map[p.meetingDate]) {
         map[p.meetingDate] = { hasPlan: false, hasActual: false, hasLeave: false, hasTravel: false, totalCount: 0 };
       }
@@ -397,7 +421,7 @@ export const MorningPlanModule: React.FC = () => {
       }
     });
     return map;
-  }, [morningPlans]);
+  }, [morningPlans, user]);
 
   const MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
