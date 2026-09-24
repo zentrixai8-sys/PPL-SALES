@@ -517,8 +517,27 @@ export const GPSTrackingModule: React.FC = () => {
     : '';
 
   const routeInteractiveMapsUrl = routeRecords.length > 0
-    ? `/map.html?route=${routeRecords.map(r => `${r.latitude},${r.longitude}`).join('|')}`
+    ? `/map.html?route=${routeRecords.map(r => `${r.latitude},${r.longitude}`).join('|')}&stops=${encodeURIComponent(
+        JSON.stringify(routeRecords.map(r => ({ a: r.address || '', t: formatToDDMMYYYYHHMM(r.resultDate) })))
+      )}`
     : '';
+
+  // Full unfiltered ping log for the selected mobile/date — same source as routeRecords
+  // but without the jitter-dedup or MAX_ROUTE_STOPS cap, so every raw entry is visible.
+  const fullLogRecords = mobileFilter
+    ? [...sortedExcelRecords]
+        .filter(r => {
+          const lat = Number(r.latitude);
+          const lng = Number(r.longitude);
+          return r.latitude && r.longitude && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
+        })
+        .sort((a, b) => {
+          const da = parseUniversalDate(a.resultDate)?.getTime() ?? 0;
+          const db = parseUniversalDate(b.resultDate)?.getTime() ?? 0;
+          return da - db;
+        })
+    : [];
+  const [showFullLogModal, setShowFullLogModal] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -891,23 +910,33 @@ export const GPSTrackingModule: React.FC = () => {
                   <div className="flex items-center gap-2.5 flex-wrap">
                     <h3 className="text-lg font-bold text-white">Road Map Details</h3>
                     {totalTraveledKm > 0 && (
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-black shadow-xs">
+                      <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 text-xs font-black shadow-xs">
                         🛣️ Total Distance: {totalTraveledKm} KM
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-slate-400 mt-1">Showing {routeRecords.length} location points</p>
                 </div>
-                <a
-                  href={routeInteractiveMapsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-600 hover:from-sky-400 hover:to-emerald-500 text-slate-950 font-bold text-xs shadow-lg shadow-sky-500/20 transition-all cursor-pointer"
-                >
-                  <Route className="w-4 h-4" />
-                  <span>View Interactive Road Map (with Arrows)</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setShowFullLogModal(true)}
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-xs transition-all cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-sky-600" />
+                    <span>View Full Log ({fullLogRecords.length})</span>
+                  </button>
+                  <a
+                    href={routeInteractiveMapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-emerald-600 hover:from-sky-400 hover:to-emerald-500 text-slate-950 font-bold text-xs shadow-lg shadow-sky-500/20 transition-all cursor-pointer"
+                  >
+                    <Route className="w-4 h-4" />
+                    <span>View Interactive Road Map (with Arrows)</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
               </div>
               
               <div className="mt-4 pt-4 border-t border-slate-800">
@@ -978,6 +1007,63 @@ export const GPSTrackingModule: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Full Unfiltered Ping Log Modal */}
+      <AnimatePresence>
+        {showFullLogModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div>
+                  <h3 className="text-base font-bold text-white">Full GPS Ping Log</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {mobileFilter} · {dateFrom} · {fullLogRecords.length} raw record{fullLogRecords.length === 1 ? '' : 's'} (unfiltered)
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFullLogModal(false)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto -mx-2 px-2">
+                {fullLogRecords.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-10">No raw ping records found.</p>
+                ) : (
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="text-[10px] uppercase tracking-wider text-slate-500 bg-slate-950 sticky top-0">
+                      <tr>
+                        <th className="py-2 px-2">#</th>
+                        <th className="py-2 px-2">Time</th>
+                        <th className="py-2 px-2">Address</th>
+                        <th className="py-2 px-2 text-right">Lat / Long</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {fullLogRecords.map((r, i) => (
+                        <tr key={r.id || i} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="py-2 px-2 font-mono text-slate-500">{i + 1}</td>
+                          <td className="py-2 px-2 whitespace-nowrap font-semibold text-white">{formatToDDMMYYYYHHMM(r.resultDate)}</td>
+                          <td className="py-2 px-2 text-slate-400">{r.address || '-'}</td>
+                          <td className="py-2 px-2 text-right font-mono text-slate-500 whitespace-nowrap">{r.latitude}, {r.longitude}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Excel Upload Preview Modal */}
       <AnimatePresence>

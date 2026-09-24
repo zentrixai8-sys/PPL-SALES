@@ -199,7 +199,13 @@ export const LoginPage: React.FC = () => {
   const currentSlide = ONBOARDING_SLIDES[currentSlideIndex];
 
   return (
-    <div className="min-h-screen w-full bg-[#d6dbe4] text-slate-900 flex items-center justify-center p-2 sm:p-6 lg:p-10 select-none overflow-x-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 text-slate-900 flex items-center justify-center p-2 sm:p-6 lg:p-10 select-none overflow-hidden relative">
+      {/* Decorative ambient background blobs, in the app's own blue/indigo brand palette */}
+      <div className="absolute -top-32 -right-28 w-[480px] h-[480px] bg-gradient-to-br from-blue-500/55 to-indigo-500/45 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute top-1/4 -left-36 w-[400px] h-[400px] bg-gradient-to-tr from-sky-400/50 to-blue-400/35 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-36 -right-20 w-[420px] h-[420px] bg-gradient-to-tl from-indigo-600/50 to-blue-600/35 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-20 left-20 w-[320px] h-[320px] bg-gradient-to-br from-amber-300/30 to-sky-300/25 rounded-full blur-2xl pointer-events-none" />
+
       <AnimatePresence mode="wait">
         {/* =========================================================================
             SCREEN 1: FULL-IMAGE ISOMETRIC ONBOARDING TOUR (CLEAN WHITE AESTHETIC)
@@ -215,8 +221,8 @@ export const LoginPage: React.FC = () => {
           >
             {/* Top Bar (Brand Header Badge + Skip Button) */}
             <div className="absolute top-0 left-0 right-0 z-30 p-4 sm:p-5 flex items-center justify-between pointer-events-auto">
-              <div className="flex items-center gap-2 bg-slate-900/85 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-700/50 text-white shadow-md">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+              <div className="flex items-center gap-2 bg-slate-100/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-300 text-slate-700 shadow-md">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span className="text-[11px] font-bold tracking-wider uppercase">
                   Popular Paints CRM
                 </span>

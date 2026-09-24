@@ -12,14 +12,16 @@
         .number-icon {
             background-color: #10b981;
             color: white;
-            border-radius: 50%;
-            width: 24px;
+            border-radius: 999px;
             height: 24px;
+            min-width: 24px;
+            padding: 0 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
+            white-space: nowrap;
             border: 2px solid white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
@@ -33,10 +35,19 @@
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
 
     <script>
+        // Escapes text before it's inserted into popup HTML (address/time come from uploaded data)
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
         // Parse URL params
         const urlParams = new URLSearchParams(window.location.search);
         const routeParam = urlParams.get('route');
-        
+        const stopsParam = urlParams.get('stops');
+
         if (!routeParam) {
             document.body.innerHTML = '<h2 style="padding: 20px;">No route data provided.</h2>';
         } else {
@@ -46,6 +57,12 @@
                 const parts = pt.split(',');
                 return [parseFloat(parts[0]), parseFloat(parts[1])];
             });
+
+            // Optional per-point address/time metadata, e.g. [{a: "Near Vartika Poultry...", t: "22-09-2026 06:30 PM"}, ...]
+            let stops = [];
+            if (stopsParam) {
+                try { stops = JSON.parse(stopsParam); } catch (e) { stops = []; }
+            }
 
             // Initialize map
             const map = L.map('map').fitBounds(latlngs);
@@ -74,16 +91,41 @@
                 ]
             }).addTo(map);
 
-            // Add Numbered Markers
+            // Add Numbered Markers, grouped by their exact coordinate.
+            // Multiple visits to the same real-world location (e.g. a round trip that starts
+            // and ends at the same address) get ONE marker at the true lat/lng — never nudged
+            // to a fake position — labelled with every stop number that occurred there, and a
+            // popup listing each of those visits individually.
+            const groupsByCoord = new Map();
             latlngs.forEach((latlng, i) => {
+                const coordKey = `${latlng[0].toFixed(5)},${latlng[1].toFixed(5)}`;
+                if (!groupsByCoord.has(coordKey)) {
+                    groupsByCoord.set(coordKey, { latlng, indices: [] });
+                }
+                groupsByCoord.get(coordKey).indices.push(i);
+            });
+
+            groupsByCoord.forEach(({ latlng, indices }) => {
+                const label = indices.map(i => i + 1).join(',');
+                const iconWidth = Math.max(24, 14 + label.length * 8);
                 const icon = L.divIcon({
                     className: 'custom-div-icon',
-                    html: `<div class="number-icon">${i + 1}</div>`,
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
+                    html: `<div class="number-icon">${label}</div>`,
+                    iconSize: [iconWidth, 24],
+                    iconAnchor: [iconWidth / 2, 12]
                 });
-                const popupStr = `<b>Location ${i + 1}</b>`;
-                L.marker(latlng, {icon: icon}).bindPopup(popupStr).addTo(map);
+
+                const popupStr = indices.map(i => {
+                    const stop = stops[i];
+                    const heading = indices.length > 1 ? `<b>Stop ${i + 1}</b>` : `<b>${escapeHtml(stop && stop.a) || `Location ${i + 1}`}</b>`;
+                    if (stop && (stop.a || stop.t)) {
+                        const addressLine = indices.length > 1 ? `<br/>${escapeHtml(stop.a)}` : '';
+                        return `<div>${heading}${addressLine}${stop.t ? `<br/><span style="color:#64748b;font-size:12px">At ${escapeHtml(stop.t)}</span>` : ''}</div>`;
+                    }
+                    return `<div>${heading}</div>`;
+                }).join('<hr style="margin:6px 0;border:none;border-top:1px solid #e2e8f0"/>');
+
+                L.marker(latlng, { icon }).bindPopup(`<div style="min-width:200px;line-height:1.5">${popupStr}</div>`).addTo(map);
             });
             
             // Adjust bounds to fit all markers

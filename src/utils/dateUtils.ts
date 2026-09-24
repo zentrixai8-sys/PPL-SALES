@@ -189,6 +189,34 @@ export function parseUniversalDate(val: any): Date | null {
     return isNaN(d.getTime()) ? null : d;
   }
 
+  // 3. Month-name formats like "Sep 22, 2026 18:30" or "September 22, 2026 6:30 PM"
+  // (e.g. GPS tracker exports). Parsed via explicit local Y/M/D/H/M construction instead
+  // of the native `new Date(string)` parser — that parser's naive-string handling reads
+  // the value using the device's own system timezone, so on a device not set to IST it
+  // silently shifted every displayed GPS time by that device's UTC offset (e.g. -5:30).
+  const MONTH_NAME_INDEX: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  };
+  const monthNameMatch = str.match(/^([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(\d{4})(?:[, ]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*(AM|PM))?)?/i);
+  if (monthNameMatch) {
+    const month = MONTH_NAME_INDEX[monthNameMatch[1].slice(0, 3).toLowerCase()];
+    if (month !== undefined) {
+      const day = Number(monthNameMatch[2]);
+      const year = Number(monthNameMatch[3]);
+      let hours = Number(monthNameMatch[4] || 0);
+      const minutes = Number(monthNameMatch[5] || 0);
+      const seconds = Number(monthNameMatch[6] || 0);
+      const meridiem = monthNameMatch[7]?.toUpperCase();
+
+      if (meridiem === 'PM' && hours < 12) hours += 12;
+      if (meridiem === 'AM' && hours === 12) hours = 0;
+
+      const d = new Date(year, month, day, hours, minutes, seconds);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
   // Fallback
   const cleanIso = str.replace('T', ' ');
   const parsed = new Date(cleanIso);
