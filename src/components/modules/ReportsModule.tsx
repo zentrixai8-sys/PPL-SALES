@@ -1,13 +1,86 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getIndianDateString, isDateWithinRange, convertInputDateToDDMMYYYY } from '../../utils/dateUtils';
-import { FileSpreadsheet, Download, Filter, FileText, FileCode, Search, Calendar, User, Shield, ChevronLeft, ChevronRight, UserX, Plane, X, CheckCircle2, Clock, Building2 } from 'lucide-react';
+import { FileSpreadsheet, Download, Filter, FileText, FileCode, Search, Calendar, User, Shield, ChevronLeft, ChevronRight, UserX, Plane, X, CheckCircle2, Clock, Building2, ChevronDown, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 
+// Custom in-DOM dropdown replacing native <select> for this page's report filters.
+// Native <select> option lists render as an OS/WebView-anchored popup that can
+// appear outside the filter card's bounds on mobile (Android WebView) — this
+// keeps the list positioned and sized relative to its own trigger instead.
+interface ReportDropdownOption {
+  value: string;
+  label: string;
+}
+
+interface ReportCustomSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: ReportDropdownOption[];
+  icon?: React.ReactNode;
+  compact?: boolean;
+}
+
+const ReportCustomSelect: React.FC<ReportCustomSelectProps> = ({ value, onChange, options, icon, compact }) => {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const selectedLabel = options.find(o => o.value === value)?.label ?? value;
+
+  return (
+    <div className={compact ? 'relative inline-block' : 'relative w-full'} ref={wrapRef}>
+      {icon && (
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+          {icon}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className={`${compact ? 'w-auto min-w-[150px]' : 'w-full'} ${icon ? 'pl-9' : 'pl-3'} pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white text-left truncate cursor-pointer focus:outline-none focus:border-sky-500 transition-colors`}
+      >
+        {selectedLabel}
+      </button>
+      <ChevronDown className={`w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full text-left px-3.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${
+                opt.value === value
+                  ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ReportsModule: React.FC = () => {
-  const { morningPlans, eveningReports, showToast } = useAuth();
+  const { morningPlans, eveningReports, showToast, themeMode } = useAuth();
 
   // Filters
   const [reportType, setReportType] = useState('Daily');
@@ -429,95 +502,104 @@ export const ReportsModule: React.FC = () => {
       </div>
 
       {/* Filter Controls Bar */}
-      <div className="p-3 sm:p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 text-xs">
+      <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3.5 text-xs">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
         <div>
-          <label className="block text-slate-400 mb-1 font-semibold">Report Period</label>
-          <select
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Report Period</label>
+          <ReportCustomSelect
             value={reportType}
-            onChange={(e) => setReportType(e.target.value)}
-            className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
-          >
-            <option value="Daily">Daily Report</option>
-            <option value="Weekly">Weekly Report</option>
-            <option value="Monthly">Monthly Report</option>
-          </select>
+            onChange={setReportType}
+            icon={<Clock className="w-4 h-4" />}
+            options={[
+              { value: 'Daily', label: 'Daily Report' },
+              { value: 'Weekly', label: 'Weekly Report' },
+              { value: 'Monthly', label: 'Monthly Report' },
+            ]}
+          />
         </div>
 
         <div>
-          <label className="block text-slate-400 mb-1 font-semibold">Sales Person</label>
-          <select
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Sales Person</label>
+          <ReportCustomSelect
             value={salesPersonFilter}
-            onChange={(e) => setSalesPersonFilter(e.target.value)}
-            className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
-          >
-            <option value="All">All Representatives</option>
-            {salesPersons.map(sp => (
-              <option key={sp} value={sp}>{sp}</option>
-            ))}
-          </select>
+            onChange={setSalesPersonFilter}
+            icon={<User className="w-4 h-4" />}
+            options={[
+              { value: 'All', label: 'All Representatives' },
+              ...salesPersons.map(sp => ({ value: sp, label: sp })),
+            ]}
+          />
         </div>
 
         <div>
-          <label className="block text-slate-400 mb-1 font-semibold">City</label>
-          <select
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">City</label>
+          <ReportCustomSelect
             value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
-          >
-            <option value="All">All Cities</option>
-            {cities.map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            onChange={setCityFilter}
+            icon={<MapPin className="w-4 h-4" />}
+            options={[
+              { value: 'All', label: 'All Cities' },
+              ...cities.map(c => ({ value: c, label: c })),
+            ]}
+          />
         </div>
 
         <div>
-          <label className="block text-slate-400 mb-1 font-semibold">Visit Status</label>
-          <select
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Visit Status</label>
+          <ReportCustomSelect
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Yes">Visited</option>
-            <option value="No">Not Visited</option>
-            <option value="Pending">Pending</option>
-          </select>
+            onChange={setStatusFilter}
+            icon={<CheckCircle2 className="w-4 h-4" />}
+            options={[
+              { value: 'All', label: 'All Statuses' },
+              { value: 'Yes', label: 'Visited' },
+              { value: 'No', label: 'Not Visited' },
+              { value: 'Pending', label: 'Pending' },
+            ]}
+          />
         </div>
 
         <div>
-          <label className="block text-slate-400 mb-1 font-semibold">Follow Up Type</label>
-          <select
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Follow Up Type</label>
+          <ReportCustomSelect
             value={followUpTypeFilter}
-            onChange={(e) => setFollowUpTypeFilter(e.target.value)}
-            className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
-          >
-            <option value="All">Morning + Evening</option>
-            <option value="Morning">Morning Follow Up (Pending)</option>
-            <option value="Evening">Evening Follow Up (Submitted)</option>
-          </select>
+            onChange={setFollowUpTypeFilter}
+            icon={<Filter className="w-4 h-4" />}
+            options={[
+              { value: 'All', label: 'Morning + Evening' },
+              { value: 'Morning', label: 'Morning Follow Up (Pending)' },
+              { value: 'Evening', label: 'Evening Follow Up (Submitted)' },
+            ]}
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:max-w-md">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 sm:max-w-md">
         <div>
-          <label className="block text-slate-400 mb-1 font-semibold">Date From</label>
-          <input
-            type="date"
-            value={dateFromFilter}
-            onChange={(e) => setDateFromFilter(e.target.value)}
-            className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
-          />
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Date From</label>
+          <div className="relative">
+            <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="date"
+              value={dateFromFilter}
+              onChange={(e) => setDateFromFilter(e.target.value)}
+              style={{ colorScheme: themeMode === 'dark' ? 'dark' : 'light' }}
+              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
+            />
+          </div>
         </div>
         <div>
-          <label className="block text-slate-400 mb-1 font-semibold">Date To</label>
-          <input
-            type="date"
-            value={dateToFilter}
-            onChange={(e) => setDateToFilter(e.target.value)}
-            className="w-full p-2 bg-slate-950 border border-slate-800 rounded-lg text-white"
-          />
+          <label className="block text-slate-500 dark:text-slate-400 mb-1 font-semibold">Date To</label>
+          <div className="relative">
+            <Calendar className="w-4 h-4 text-blue-500 dark:text-blue-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="date"
+              value={dateToFilter}
+              onChange={(e) => setDateToFilter(e.target.value)}
+              style={{ colorScheme: themeMode === 'dark' ? 'dark' : 'light' }}
+              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 transition-colors"
+            />
+          </div>
         </div>
       </div>
       </div>
@@ -536,16 +618,15 @@ export const ReportsModule: React.FC = () => {
               <h2 className="font-bold text-base text-slate-900 dark:text-white">Visit Calendar</h2>
             </div>
 
-            <select
+            <ReportCustomSelect
               value={calendarSalesPerson}
-              onChange={(e) => setCalendarSalesPerson(e.target.value)}
-              className="p-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-            >
-              <option value="All">All Sales Reps</option>
-              {salesPersons.map(sp => (
-                <option key={sp} value={sp}>{sp}</option>
-              ))}
-            </select>
+              onChange={setCalendarSalesPerson}
+              compact
+              options={[
+                { value: 'All', label: 'All Sales Reps' },
+                ...salesPersons.map(sp => ({ value: sp, label: sp })),
+              ]}
+            />
           </div>
 
           {monthSummary.pending > 0 && (
