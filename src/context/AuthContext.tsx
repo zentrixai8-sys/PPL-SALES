@@ -10,7 +10,8 @@ import {
   fetchEveningReportsFromSheet,
   deleteSheetRow,
   deleteSheetRowById,
-  updateSheetRow
+  updateSheetRow,
+  updateUserInSheet
 } from '../services/api';
 import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
 
@@ -66,6 +67,7 @@ interface AuthContextType {
   updateAttendanceRecord: (rec: AttendanceRecord) => void;
   deleteAttendanceRecord: (id: string) => void;
   updateUserProfilePic: (newProfileUrl: string) => Promise<void>;
+  updateUserProfileDetails: (updates: Partial<User>) => Promise<boolean>;
 }
 
 const LOCAL_STORAGE_USER_KEY = 'sales_reporting_user';
@@ -711,6 +713,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserProfileDetails = async (updates: Partial<User>): Promise<boolean> => {
+    if (!authState.user) return false;
+    const success = await updateUserInSheet(authState.user.id, updates);
+    if (success) {
+      const updatedUser = { ...authState.user, ...updates };
+      setAuthState(prev => ({ ...prev, user: updatedUser }));
+      localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updatedUser));
+    }
+    return success;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -760,6 +773,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateAttendanceRecord,
         deleteAttendanceRecord,
         updateUserProfilePic,
+        updateUserProfileDetails,
       }}
     >
       {children}

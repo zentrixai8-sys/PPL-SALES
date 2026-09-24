@@ -9,6 +9,20 @@ export interface User {
   manager: string;
   crm: string;
   profileUrl: string;
+  designation?: string;
+  department?: string;
+  phone?: string;
+  altPhone?: string;
+  joiningDate?: string;
+  dob?: string;
+  bloodGroup?: string;
+  territory?: string;
+  headquarters?: string;
+  shiftTiming?: string;
+  workStatus?: string;
+  kycStatus?: string;
+  bankAccount?: string;
+  pfUan?: string;
 }
 
 export interface AuthState {

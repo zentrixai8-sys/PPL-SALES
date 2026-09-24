@@ -16,6 +16,20 @@ CREATE TABLE IF NOT EXISTS public.users (
     manager TEXT DEFAULT 'Regional Head',
     crm TEXT DEFAULT 'CRM-1001',
     profile_url TEXT DEFAULT 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    designation TEXT,
+    department TEXT,
+    phone TEXT,
+    alt_phone TEXT,
+    joining_date TEXT,
+    dob TEXT,
+    blood_group TEXT,
+    territory TEXT,
+    headquarters TEXT,
+    shift_timing TEXT,
+    work_status TEXT,
+    kyc_status TEXT,
+    bank_account TEXT,
+    pf_uan TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -177,9 +191,69 @@ CREATE POLICY "Allow all operations for anon on crm_orders" ON public.crm_orders
 -- INSERT DEFAULT SEED USERS FOR POPULAR PAINTS SALES SYSTEM
 -- ==============================================================================
 INSERT INTO public.users (id, user_name, password, role, gmail, manager, crm, profile_url)
-VALUES 
+VALUES
     ('ADMIN01', 'Administrator', 'admin123', 'Admin', 'admin@popularpaints.com', 'Head Office', 'CRM-MASTER', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'),
     ('EMP101', 'Deepak Sahu', '123456', 'Sales', 'deepak@popularpaints.com', 'Rajesh Sharma', 'CRM-1001', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80'),
     ('EMP102', 'Amit Verma', '123456', 'Sales', 'amit@popularpaints.com', 'Rajesh Sharma', 'CRM-1002', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80')
-ON CONFLICT (id) DO UPDATE 
+ON CONFLICT (id) DO UPDATE
 SET user_name = EXCLUDED.user_name, password = EXCLUDED.password, role = EXCLUDED.role;
+
+-- ==============================================================================
+-- 9. GRIEVANCE TICKETS TABLE
+-- Added later than the tables above — this table was missing from the live
+-- database even though the app code (src/services/api.ts) already reads and
+-- writes to it, so grievance data was silently falling back to local-only
+-- storage. Run just this block in the Supabase SQL Editor to add it
+-- (the tables/policies above already exist, re-running those would error).
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.grievance_tickets (
+    id TEXT PRIMARY KEY DEFAULT uuid_generate_v4()::TEXT,
+    ticket_number TEXT,
+    sales_person_id TEXT NOT NULL,
+    sales_person_name TEXT NOT NULL,
+    customer_name TEXT NOT NULL,
+    contact_person TEXT,
+    contact_number TEXT,
+    city TEXT,
+    category TEXT DEFAULT 'Other' CHECK (category IN ('Product Quality', 'Packaging / Damage', 'Delivery Delay', 'Billing / Scheme Mismatch', 'Shade / Color Variation', 'Material Replacement', 'Other')),
+    priority TEXT DEFAULT 'Medium' CHECK (priority IN ('Low', 'Medium', 'High', 'Urgent')),
+    description TEXT,
+    images JSONB DEFAULT '[]'::jsonb,
+    status TEXT DEFAULT 'Open' CHECK (status IN ('Open', 'In Review', 'Closed')),
+    created_at_formatted TEXT,
+    resolved_at TEXT,
+    resolved_by TEXT,
+    resolved_by_id TEXT,
+    resolution_remarks TEXT,
+    resolution_images JSONB DEFAULT '[]'::jsonb,
+    action_taken TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_grievance_tickets_sales_person ON public.grievance_tickets (sales_person_id, status);
+
+ALTER TABLE public.grievance_tickets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow all operations for anon on grievance_tickets" ON public.grievance_tickets FOR ALL USING (true) WITH CHECK (true);
+
+-- ==============================================================================
+-- 10. USERS TABLE — ADD FULL HR / PERSONAL PROFILE COLUMNS
+-- The CREATE TABLE for public.users above now includes these columns for a
+-- fresh install, but on the live database the table already exists (so that
+-- CREATE TABLE IF NOT EXISTS is skipped) — run this block to add the columns
+-- to the existing table. Safe to re-run (ADD COLUMN IF NOT EXISTS).
+-- ==============================================================================
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS designation TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS department TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS alt_phone TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS joining_date TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS dob TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS blood_group TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS territory TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS headquarters TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS shift_timing TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS work_status TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS kyc_status TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS bank_account TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS pf_uan TEXT;

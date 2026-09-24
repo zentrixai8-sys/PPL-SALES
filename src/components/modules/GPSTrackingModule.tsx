@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { GPSExcelRecord } from '../../types';
@@ -52,6 +53,86 @@ export const calculateDistanceKm = (
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const d = R * c;
   return Number(d.toFixed(2));
+};
+
+// Custom in-DOM dropdown for the Mobile Number filter.
+// Native <select> option lists render as an OS/WebView-anchored popup that can
+// appear outside the filter card's bounds on mobile (Android WebView) — this
+// keeps the list positioned and sized relative to its own container instead.
+interface MobileNumberDropdownProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+  dark?: boolean;
+}
+
+const MobileNumberDropdown: React.FC<MobileNumberDropdownProps> = ({ value, onChange, options, placeholder, dark }) => {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const triggerClass = dark
+    ? 'bg-slate-950 border-slate-800 text-slate-200'
+    : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-200';
+
+  const panelClass = dark
+    ? 'bg-slate-900 border-slate-800'
+    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800';
+
+  const itemClass = (active: boolean) => {
+    if (active) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+    return dark
+      ? 'text-slate-300 hover:bg-slate-800'
+      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
+  };
+
+  return (
+    <div className="relative" ref={wrapRef}>
+      <Smartphone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className={`w-full pl-9 pr-8 py-2.5 border rounded-xl text-xs text-left truncate focus:outline-none focus:border-emerald-500 cursor-pointer transition-colors ${triggerClass}`}
+      >
+        {value || placeholder}
+      </button>
+      <ChevronDown className={`w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+
+      {open && (
+        <div className={`absolute left-0 right-0 top-full z-30 mt-1.5 max-h-60 overflow-y-auto rounded-xl border shadow-xl custom-scrollbar ${panelClass}`}>
+          <button
+            type="button"
+            onClick={() => { onChange(''); setOpen(false); }}
+            className={`w-full text-left px-3.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${itemClass(!value)}`}
+          >
+            {placeholder}
+          </button>
+          {options.map(num => (
+            <button
+              key={num}
+              type="button"
+              onClick={() => { onChange(num); setOpen(false); }}
+              className={`w-full text-left px-3.5 py-2.5 text-xs font-mono transition-colors cursor-pointer ${itemClass(value === num)}`}
+            >
+              {num}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export const GPSTrackingModule: React.FC = () => {
@@ -587,20 +668,12 @@ export const GPSTrackingModule: React.FC = () => {
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
                   Mobile Number
                 </label>
-                <div className="relative">
-                  <Smartphone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <select
-                    value={mobileFilter}
-                    onChange={(e) => setMobileFilter(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer transition-colors"
-                  >
-                    <option value="">All Mobile Numbers</option>
-                    {mobileNumberOptions.map(num => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <MobileNumberDropdown
+                  value={mobileFilter}
+                  onChange={setMobileFilter}
+                  options={mobileNumberOptions}
+                  placeholder="All Mobile Numbers"
+                />
               </div>
 
               {/* From Date */}
@@ -783,20 +856,13 @@ export const GPSTrackingModule: React.FC = () => {
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
                   Mobile / Device Number
                 </label>
-                <div className="relative">
-                  <Smartphone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <select
-                    value={mobileFilter}
-                    onChange={(e) => setMobileFilter(e.target.value)}
-                    className="w-full pl-9 pr-8 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500 appearance-none cursor-pointer transition-colors"
-                  >
-                    <option value="">Select Mobile Number...</option>
-                    {mobileNumberOptions.map(num => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <MobileNumberDropdown
+                  value={mobileFilter}
+                  onChange={setMobileFilter}
+                  options={mobileNumberOptions}
+                  placeholder="Select Mobile Number..."
+                  dark
+                />
               </div>
 
               <div>

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { uploadToCloudinary } from '../../services/cloudinaryService';
+import { loginWithGoogleSheet, updateUserInSheet } from '../../services/api';
 import {
   User,
   Lock,
@@ -25,12 +26,14 @@ import {
   HeartPulse,
   BadgeCheck,
   FileCheck2,
-  Sparkles
+  Sparkles,
+  Edit2,
+  IdCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const UserProfileModule: React.FC = () => {
-  const { authState, showToast, updateUserProfilePic } = useAuth();
+  const { authState, showToast, updateUserProfilePic, updateUserProfileDetails } = useAuth();
   const user = authState.user;
 
   const [currentPass, setCurrentPass] = useState('');
@@ -46,31 +49,81 @@ export const UserProfileModule: React.FC = () => {
   const defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80';
   const currentDpUrl = user?.profileUrl || defaultAvatar;
 
-  // Demo dynamic employee details based on role
+  // Editable HR/personal fields come from the real `users` row in Supabase (blank
+  // until the employee fills them in via "Edit Details"). Performance metrics
+  // below stay as placeholders — they belong to Target/CRM data, not the profile.
   const isAdministrator = user?.role === 'Admin';
+  const NOT_SET = 'Not set';
   const empDetails = {
     empCode: isAdministrator ? 'PPL-ADM-001' : `PPL-SLS-${user?.id || '042'}`,
-    designation: isAdministrator ? 'Executive Vice President / Admin' : 'Senior Area Sales Manager',
-    department: 'Decorative & Industrial Coatings Division',
-    phone: '+91 98261 45090',
-    altPhone: '+91 94252 88710',
+    designation: user?.designation || NOT_SET,
+    department: user?.department || NOT_SET,
+    phone: user?.phone || NOT_SET,
+    altPhone: user?.altPhone || NOT_SET,
     email: user?.gmail || (isAdministrator ? 'admin@popularpaints.com' : `${(user?.userName || 'sales').toLowerCase().replace(/\s+/g, '.')}@popularpaints.com`),
-    joiningDate: '15-Jan-2021 (5+ Yrs with Popular Paints)',
-    dob: '12-Aug-1991',
-    bloodGroup: 'B+ Positive',
-    territory: isAdministrator ? 'National HQ / All Zones' : 'Raipur, Bilaspur, Katni, Sambalpur',
-    headquarters: 'Raipur Central Office, Chhattisgarh',
+    joiningDate: user?.joiningDate || NOT_SET,
+    dob: user?.dob || NOT_SET,
+    bloodGroup: user?.bloodGroup || NOT_SET,
+    territory: user?.territory || NOT_SET,
+    headquarters: user?.headquarters || NOT_SET,
     crmId: user?.crm || 'CRM-PPL-1001',
     manager: user?.manager || 'Board of Directors / MD',
-    shiftTiming: '09:30 AM - 06:30 PM (Mon - Sat)',
-    workStatus: 'Full Time · Permanent Staff',
-    kycStatus: 'Verified (Aadhaar & PAN Linked)',
-    bankAccount: 'HDFC Bank · A/C Ending in 9042',
-    pfUan: '100984729104',
+    shiftTiming: user?.shiftTiming || NOT_SET,
+    workStatus: user?.workStatus || NOT_SET,
+    kycStatus: user?.kycStatus || NOT_SET,
+    bankAccount: user?.bankAccount || NOT_SET,
+    pfUan: user?.pfUan || NOT_SET,
     monthlyTarget: isAdministrator ? '₹50,00,000' : '₹15,00,000',
     targetAchievement: '96.8%',
     totalVisits: '552 Visits',
     activeDealers: isAdministrator ? '240+ Dealers' : '48 Active Accounts',
+  };
+
+  // Edit Profile Details Modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const emptyProfileForm = {
+    designation: '', department: '', phone: '', altPhone: '',
+    joiningDate: '', dob: '', bloodGroup: '', territory: '', headquarters: '',
+    shiftTiming: '', workStatus: '', kycStatus: '', bankAccount: '', pfUan: '',
+  };
+  const [profileForm, setProfileForm] = useState(emptyProfileForm);
+
+  const openEditModal = () => {
+    setProfileForm({
+      designation: user?.designation || '',
+      department: user?.department || '',
+      phone: user?.phone || '',
+      altPhone: user?.altPhone || '',
+      joiningDate: user?.joiningDate || '',
+      dob: user?.dob || '',
+      bloodGroup: user?.bloodGroup || '',
+      territory: user?.territory || '',
+      headquarters: user?.headquarters || '',
+      shiftTiming: user?.shiftTiming || '',
+      workStatus: user?.workStatus || '',
+      kycStatus: user?.kycStatus || '',
+      bankAccount: user?.bankAccount || '',
+      pfUan: user?.pfUan || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleProfileFieldChange = (field: keyof typeof emptyProfileForm, value: string) => {
+    setProfileForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveProfileDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    const success = await updateUserProfileDetails(profileForm);
+    setIsSavingProfile(false);
+    if (success) {
+      showToast('success', 'Profile Updated', 'Your profile details were saved successfully.');
+      setShowEditModal(false);
+    } else {
+      showToast('error', 'Update Failed', 'Could not save your profile details. Please try again.');
+    }
   };
 
   const handleDpFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,15 +162,27 @@ export const UserProfileModule: React.FC = () => {
       showToast('error', 'Weak Password', 'Password must be at least 6 characters long.');
       return;
     }
+    if (!user) return;
 
     setIsChanging(true);
-    setTimeout(() => {
+    try {
+      await loginWithGoogleSheet(user.id, currentPass);
+    } catch {
       setIsChanging(false);
+      showToast('error', 'Incorrect Password', 'Your current password is incorrect.');
+      return;
+    }
+
+    const success = await updateUserInSheet(user.id, { password: newPass });
+    setIsChanging(false);
+    if (success) {
       setCurrentPass('');
       setNewPass('');
       setConfirmPass('');
       showToast('success', 'Password Updated', 'Your account password was changed successfully.');
-    }, 1000);
+    } else {
+      showToast('error', 'Update Failed', 'Could not update your password. Please try again.');
+    }
   };
 
   return (
@@ -267,6 +332,18 @@ export const UserProfileModule: React.FC = () => {
       </div>
 
       {/* Comprehensive Details 2-Column Grid */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-bold text-slate-900 dark:text-white">My Profile Details</h2>
+        <button
+          type="button"
+          onClick={openEditModal}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+        >
+          <Edit2 className="w-3.5 h-3.5" />
+          <span>Edit Details</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Personal & Contact Details */}
         <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 shadow-sm">
@@ -368,18 +445,34 @@ export const UserProfileModule: React.FC = () => {
 
             <div className="flex items-center justify-between py-1.5 border-b border-slate-800/60">
               <span className="text-slate-400 flex items-center gap-2">
+                <BadgeCheck className="w-3.5 h-3.5 text-sky-400" />
+                <span>Work Status</span>
+              </span>
+              <span className="font-semibold text-white">{empDetails.workStatus}</span>
+            </div>
+
+            <div className="flex items-center justify-between py-1.5 border-b border-slate-800/60">
+              <span className="text-slate-400 flex items-center gap-2">
                 <FileCheck2 className="w-3.5 h-3.5 text-teal-400" />
                 <span>KYC &amp; Compliance</span>
               </span>
               <span className="font-semibold text-emerald-400">{empDetails.kycStatus}</span>
             </div>
 
-            <div className="flex items-center justify-between py-1.5">
+            <div className="flex items-center justify-between py-1.5 border-b border-slate-800/60">
               <span className="text-slate-400 flex items-center gap-2">
                 <CreditCard className="w-3.5 h-3.5 text-purple-400" />
                 <span>Salary Account</span>
               </span>
               <span className="font-semibold text-white">{empDetails.bankAccount}</span>
+            </div>
+
+            <div className="flex items-center justify-between py-1.5">
+              <span className="text-slate-400 flex items-center gap-2">
+                <IdCard className="w-3.5 h-3.5 text-amber-400" />
+                <span>PF / UAN Number</span>
+              </span>
+              <span className="font-semibold text-white font-mono">{empDetails.pfUan}</span>
             </div>
           </div>
         </div>
@@ -509,6 +602,207 @@ export const UserProfileModule: React.FC = () => {
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Profile Details Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">
+                    <Edit2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Edit Profile Details</h2>
+                    <p className="text-[11px] text-slate-400">Saved to your employee record</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveProfileDetails} className="space-y-4 text-xs">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-sky-400">Personal &amp; Contact</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Primary Mobile</label>
+                    <input
+                      type="text"
+                      value={profileForm.phone}
+                      onChange={(e) => handleProfileFieldChange('phone', e.target.value)}
+                      placeholder="e.g. +91 98261 45090"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Emergency Contact</label>
+                    <input
+                      type="text"
+                      value={profileForm.altPhone}
+                      onChange={(e) => handleProfileFieldChange('altPhone', e.target.value)}
+                      placeholder="e.g. +91 94252 88710"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Date of Birth</label>
+                    <input
+                      type="text"
+                      value={profileForm.dob}
+                      onChange={(e) => handleProfileFieldChange('dob', e.target.value)}
+                      placeholder="e.g. 12-Aug-1991"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Blood Group</label>
+                    <input
+                      type="text"
+                      value={profileForm.bloodGroup}
+                      onChange={(e) => handleProfileFieldChange('bloodGroup', e.target.value)}
+                      placeholder="e.g. B+"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-300 font-semibold mb-1">Base Location</label>
+                    <input
+                      type="text"
+                      value={profileForm.headquarters}
+                      onChange={(e) => handleProfileFieldChange('headquarters', e.target.value)}
+                      placeholder="e.g. Raipur Central Office, Chhattisgarh"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+
+                <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 pt-2">Employment &amp; Territory</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Designation</label>
+                    <input
+                      type="text"
+                      value={profileForm.designation}
+                      onChange={(e) => handleProfileFieldChange('designation', e.target.value)}
+                      placeholder="e.g. Senior Area Sales Manager"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Department</label>
+                    <input
+                      type="text"
+                      value={profileForm.department}
+                      onChange={(e) => handleProfileFieldChange('department', e.target.value)}
+                      placeholder="e.g. Decorative & Industrial Coatings"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Date of Joining</label>
+                    <input
+                      type="text"
+                      value={profileForm.joiningDate}
+                      onChange={(e) => handleProfileFieldChange('joiningDate', e.target.value)}
+                      placeholder="e.g. 15-Jan-2021"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Assigned Zone</label>
+                    <input
+                      type="text"
+                      value={profileForm.territory}
+                      onChange={(e) => handleProfileFieldChange('territory', e.target.value)}
+                      placeholder="e.g. Raipur, Bilaspur, Katni"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Shift Timing</label>
+                    <input
+                      type="text"
+                      value={profileForm.shiftTiming}
+                      onChange={(e) => handleProfileFieldChange('shiftTiming', e.target.value)}
+                      placeholder="e.g. 09:30 AM - 06:30 PM"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Work Status</label>
+                    <input
+                      type="text"
+                      value={profileForm.workStatus}
+                      onChange={(e) => handleProfileFieldChange('workStatus', e.target.value)}
+                      placeholder="e.g. Full Time · Permanent"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">KYC &amp; Compliance</label>
+                    <input
+                      type="text"
+                      value={profileForm.kycStatus}
+                      onChange={(e) => handleProfileFieldChange('kycStatus', e.target.value)}
+                      placeholder="e.g. Verified (Aadhaar & PAN)"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Salary Account</label>
+                    <input
+                      type="text"
+                      value={profileForm.bankAccount}
+                      onChange={(e) => handleProfileFieldChange('bankAccount', e.target.value)}
+                      placeholder="e.g. HDFC Bank · A/C Ending 9042"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-300 font-semibold mb-1">PF / UAN Number</label>
+                    <input
+                      type="text"
+                      value={profileForm.pfUan}
+                      onChange={(e) => handleProfileFieldChange('pfUan', e.target.value)}
+                      placeholder="e.g. 100984729104"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingProfile}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSavingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    Save Changes
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

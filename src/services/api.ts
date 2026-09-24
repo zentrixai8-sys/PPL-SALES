@@ -55,6 +55,20 @@ function normalizeUserData(rawData: Record<string, any>): User {
     manager,
     crm,
     profileUrl,
+    designation: getVal('designation'),
+    department: getVal('department'),
+    phone: getVal('phone'),
+    altPhone: getVal('alt_phone', 'altPhone'),
+    joiningDate: getVal('joining_date', 'joiningDate'),
+    dob: getVal('dob'),
+    bloodGroup: getVal('blood_group', 'bloodGroup'),
+    territory: getVal('territory'),
+    headquarters: getVal('headquarters'),
+    shiftTiming: getVal('shift_timing', 'shiftTiming'),
+    workStatus: getVal('work_status', 'workStatus'),
+    kycStatus: getVal('kyc_status', 'kycStatus'),
+    bankAccount: getVal('bank_account', 'bankAccount'),
+    pfUan: getVal('pf_uan', 'pfUan'),
   };
 }
 
@@ -213,6 +227,20 @@ export async function updateUserInSheet(id: string, updates: Partial<User> & { p
     if (updates.crm !== undefined) payload.crm = updates.crm;
     if (updates.profileUrl !== undefined) payload.profile_url = updates.profileUrl;
     if (updates.password !== undefined) payload.password = updates.password;
+    if (updates.designation !== undefined) payload.designation = updates.designation;
+    if (updates.department !== undefined) payload.department = updates.department;
+    if (updates.phone !== undefined) payload.phone = updates.phone;
+    if (updates.altPhone !== undefined) payload.alt_phone = updates.altPhone;
+    if (updates.joiningDate !== undefined) payload.joining_date = updates.joiningDate;
+    if (updates.dob !== undefined) payload.dob = updates.dob;
+    if (updates.bloodGroup !== undefined) payload.blood_group = updates.bloodGroup;
+    if (updates.territory !== undefined) payload.territory = updates.territory;
+    if (updates.headquarters !== undefined) payload.headquarters = updates.headquarters;
+    if (updates.shiftTiming !== undefined) payload.shift_timing = updates.shiftTiming;
+    if (updates.workStatus !== undefined) payload.work_status = updates.workStatus;
+    if (updates.kycStatus !== undefined) payload.kyc_status = updates.kycStatus;
+    if (updates.bankAccount !== undefined) payload.bank_account = updates.bankAccount;
+    if (updates.pfUan !== undefined) payload.pf_uan = updates.pfUan;
 
     const { error } = await supabase.from('users').update(payload).eq('id', id);
 
@@ -1309,7 +1337,7 @@ export async function resolveGrievanceTicketInSheet(
           resolution_images: resolution.images,
           action_taken: resolution.actionTaken || 'Resolved & Closed',
         })
-        .eq('ticket_number', ticketId);
+        .eq('id', ticketId);
     } catch (err) {
       console.warn('Supabase resolve ticket error:', err);
     }

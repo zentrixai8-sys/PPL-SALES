@@ -40,9 +40,12 @@ import {
   Maximize2,
   List,
   LayoutGrid,
-  Tag
+  Tag,
+  Printer,
+  Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import jsPDF from 'jspdf';
 
 const CATEGORIES: GrievanceCategory[] = [
   'Product Quality',
@@ -56,6 +59,241 @@ const CATEGORIES: GrievanceCategory[] = [
 
 const PRIORITIES: GrievancePriority[] = ['Low', 'Medium', 'High', 'Urgent'];
 
+// Loads a ticket photo (already-base64 or a remote URL) into a normalized JPEG
+// data URL so it can be embedded in the PDF regardless of its original source/format.
+const loadImageAsDataUrl = (src: string): Promise<{ dataUrl: string; width: number; height: number } | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(null); return; }
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.85), width: img.naturalWidth, height: img.naturalHeight });
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+};
+
+// Builds a branded, print-ready PDF for a single grievance ticket — shared by
+// the modal's Print and Download actions so both produce identical output.
+const generateGrievanceTicketPdf = async (ticket: GrievanceTicket): Promise<jsPDF> => {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 14;
+  const contentWidth = pageWidth - marginX * 2;
+  let y = 0;
+
+  const BRAND: [number, number, number] = [35, 50, 139];
+  const SLATE_DARK: [number, number, number] = [30, 41, 59];
+  const SLATE_MID: [number, number, number] = [100, 116, 139];
+  const SLATE_LIGHT: [number, number, number] = [226, 232, 240];
+
+  const ensureSpace = (needed: number) => {
+    if (y + needed > pageHeight - 18) {
+      doc.addPage();
+      y = 18;
+    }
+  };
+
+  // Header band
+  doc.setFillColor(...BRAND);
+  doc.rect(0, 0, pageWidth, 26, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('POPULAR PAINTS & CHEMICALS', marginX, 12);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.text('Customer Grievance Ticket', marginX, 19);
+  doc.setFontSize(8);
+  doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, pageWidth - marginX, 19, { align: 'right' });
+
+  y = 34;
+
+  // Ticket number
+  doc.setTextColor(...SLATE_DARK);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text(ticket.ticketNumber, marginX, y);
+
+  // Status / priority / category badges, right-aligned
+  const badgeY = y - 5;
+  let bx = pageWidth - marginX;
+  const drawBadgeRight = (label: string, rgb: [number, number, number]) => {
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    const w = doc.getTextWidth(label) + 6;
+    bx -= w;
+    doc.setFillColor(...rgb);
+    doc.roundedRect(bx, badgeY, w, 6.5, 1.5, 1.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.text(label, bx + w / 2, badgeY + 4.4, { align: 'center' });
+    bx -= 3;
+  };
+  const statusColor: [number, number, number] = ticket.status === 'Closed' ? [16, 185, 129] : ticket.status === 'In Review' ? [14, 165, 233] : [245, 158, 11];
+  drawBadgeRight(ticket.status.toUpperCase(), statusColor);
+  const priorityColor: [number, number, number] = ticket.priority === 'Urgent' ? [225, 29, 72] : ticket.priority === 'High' ? [217, 119, 6] : ticket.priority === 'Medium' ? [2, 132, 199] : [100, 116, 139];
+  drawBadgeRight(`${ticket.priority.toUpperCase()} PRIORITY`, priorityColor);
+  drawBadgeRight(ticket.category.toUpperCase(), [79, 70, 229]);
+
+  y += 7;
+  doc.setTextColor(...SLATE_DARK);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Customer: ${ticket.customerName}`, marginX, y);
+
+  y += 6;
+  doc.setDrawColor(...SLATE_LIGHT);
+  doc.line(marginX, y, pageWidth - marginX, y);
+  y += 8;
+
+  // 3-column info block: Party / Contact / Raised By
+  const colW = contentWidth / 3;
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(marginX, y, contentWidth, 26, 2, 2, 'F');
+  const drawInfoCol = (idx: number, label: string, lines: string[]) => {
+    const cx = marginX + 4 + idx * colW;
+    doc.setFontSize(7.5);
+    doc.setTextColor(...SLATE_MID);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label.toUpperCase(), cx, y + 6);
+    doc.setFontSize(9.5);
+    doc.setTextColor(...SLATE_DARK);
+    lines.forEach((line, li) => {
+      doc.setFont('helvetica', li === 0 ? 'bold' : 'normal');
+      doc.text(line, cx, y + 12 + li * 5, { maxWidth: colW - 6 });
+    });
+  };
+  drawInfoCol(0, 'Party / Customer', [ticket.customerName, ticket.contactPerson ? `Attn: ${ticket.contactPerson}` : ''].filter(Boolean));
+  drawInfoCol(1, 'Contact & City', [ticket.contactNumber || 'N/A', ticket.city || ''].filter(Boolean));
+  drawInfoCol(2, 'Raised By', [ticket.salesPersonName, ticket.createdAt].filter(Boolean));
+  y += 26 + 8;
+
+  // Description
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...SLATE_MID);
+  doc.text('GRIEVANCE / PROBLEM DESCRIPTION', marginX, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...SLATE_DARK);
+  const descLines = doc.splitTextToSize(ticket.description || '-', contentWidth - 8);
+  const descBoxHeight = descLines.length * 5 + 8;
+  ensureSpace(descBoxHeight + 10);
+  doc.setDrawColor(...SLATE_LIGHT);
+  doc.roundedRect(marginX, y, contentWidth, descBoxHeight, 2, 2, 'S');
+  doc.text(descLines, marginX + 4, y + 7);
+  y += descBoxHeight + 8;
+
+  const drawImageGrid = async (label: string, urls: string[]) => {
+    if (!urls || urls.length === 0) return;
+    ensureSpace(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...SLATE_MID);
+    doc.text(`${label.toUpperCase()} (${urls.length})`, marginX, y);
+    y += 5;
+
+    const perRow = 4;
+    const gap = 3;
+    const imgSize = (contentWidth - gap * (perRow - 1)) / perRow;
+    let col = 0;
+    for (const url of urls) {
+      ensureSpace(imgSize + 4);
+      const cx = marginX + col * (imgSize + gap);
+      const loaded = await loadImageAsDataUrl(url);
+      doc.setDrawColor(...SLATE_LIGHT);
+      doc.roundedRect(cx, y, imgSize, imgSize, 1.5, 1.5, 'S');
+      if (loaded) {
+        const ratio = loaded.width / loaded.height;
+        const drawW = ratio > 1 ? imgSize : imgSize * ratio;
+        const drawH = ratio > 1 ? imgSize / ratio : imgSize;
+        doc.addImage(loaded.dataUrl, 'JPEG', cx + (imgSize - drawW) / 2, y + (imgSize - drawH) / 2, drawW, drawH);
+      } else {
+        doc.setFontSize(7);
+        doc.setTextColor(...SLATE_MID);
+        doc.text('Image unavailable', cx + imgSize / 2, y + imgSize / 2, { align: 'center', maxWidth: imgSize - 4 });
+      }
+      col++;
+      if (col >= perRow) {
+        col = 0;
+        y += imgSize + gap;
+      }
+    }
+    if (col !== 0) y += imgSize + gap;
+    y += 4;
+  };
+
+  await drawImageGrid('Attached Evidence Photos', ticket.images);
+
+  if (ticket.status === 'Closed') {
+    ensureSpace(30);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(5, 150, 105);
+    doc.text('RESOLUTION & CLOSURE DETAILS', marginX, y + 5);
+    if (ticket.resolvedAt) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...SLATE_MID);
+      doc.text(ticket.resolvedAt, pageWidth - marginX, y + 5, { align: 'right' });
+    }
+    y += 10;
+
+    doc.setFontSize(9);
+    doc.setTextColor(...SLATE_DARK);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Action Taken:', marginX, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(ticket.actionTaken || 'Resolved & Settled', marginX + 26, y, { maxWidth: contentWidth / 2 - 30 });
+    if (ticket.resolvedBy) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Resolved By:', marginX + contentWidth / 2, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(ticket.resolvedBy, marginX + contentWidth / 2 + 24, y);
+    }
+    y += 7;
+
+    if (ticket.resolutionRemarks) {
+      const remLines = doc.splitTextToSize(ticket.resolutionRemarks, contentWidth - 8);
+      const remH = remLines.length * 5 + 6;
+      ensureSpace(remH + 4);
+      doc.setDrawColor(167, 243, 208);
+      doc.roundedRect(marginX, y, contentWidth, remH, 2, 2, 'S');
+      doc.setTextColor(...SLATE_DARK);
+      doc.text(remLines, marginX + 4, y + 6);
+      y += remH + 6;
+    }
+
+    await drawImageGrid('Resolution Proofs', ticket.resolutionImages || []);
+  }
+
+  const pageCount = doc.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(...SLATE_LIGHT);
+    doc.line(marginX, pageHeight - 14, pageWidth - marginX, pageHeight - 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...SLATE_MID);
+    doc.text('Popular Paints & Chemicals — Sales Portal · Customer Grievance & Ticket Center', marginX, pageHeight - 9);
+    doc.text(`Page ${p} of ${pageCount}`, pageWidth - marginX, pageHeight - 9, { align: 'right' });
+  }
+
+  return doc;
+};
+
 export const GrievanceModule: React.FC = () => {
   const { authState, showToast } = useAuth();
   const user = authState.user;
@@ -64,6 +302,35 @@ export const GrievanceModule: React.FC = () => {
   const [tickets, setTickets] = useState<GrievanceTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isPrintingPdf, setIsPrintingPdf] = useState(false);
+
+  const handleDownloadTicketPdf = async (ticket: GrievanceTicket) => {
+    setIsDownloadingPdf(true);
+    try {
+      const doc = await generateGrievanceTicketPdf(ticket);
+      doc.save(`Grievance_${ticket.ticketNumber}.pdf`);
+    } catch (err) {
+      console.error('Ticket PDF generation failed:', err);
+      showToast('error', 'Download Failed', 'Could not generate the ticket PDF.');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  const handlePrintTicketPdf = async (ticket: GrievanceTicket) => {
+    setIsPrintingPdf(true);
+    try {
+      const doc = await generateGrievanceTicketPdf(ticket);
+      doc.autoPrint();
+      window.open(doc.output('bloburl'), '_blank');
+    } catch (err) {
+      console.error('Ticket PDF print failed:', err);
+      showToast('error', 'Print Failed', 'Could not prepare the ticket for printing.');
+    } finally {
+      setIsPrintingPdf(false);
+    }
+  };
 
   // View Mode: 'list' (default) or 'grid'
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -1777,7 +2044,7 @@ export const GrievanceModule: React.FC = () => {
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+              <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
                 <button
                   type="button"
                   onClick={() => setSelectedTicketForDetails(null)}
@@ -1786,21 +2053,43 @@ export const GrievanceModule: React.FC = () => {
                   Close
                 </button>
 
-                {selectedTicketForDetails.status !== 'Closed' && isAdminOrManager && (
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => {
-                      const t = selectedTicketForDetails;
-                      setSelectedTicketForDetails(null);
-                      setSelectedTicketForResolution(t);
-                      setIsResolveModalOpen(true);
-                    }}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/25 cursor-pointer transition-all"
+                    disabled={isPrintingPdf}
+                    onClick={() => handlePrintTicketPdf(selectedTicketForDetails)}
+                    className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-60"
                   >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Resolve &amp; Close Ticket</span>
+                    {isPrintingPdf ? <RefreshCw className="w-4 h-4 animate-spin text-slate-500" /> : <Printer className="w-4 h-4 text-slate-500" />}
+                    <span>Print</span>
                   </button>
-                )}
+
+                  <button
+                    type="button"
+                    disabled={isDownloadingPdf}
+                    onClick={() => handleDownloadTicketPdf(selectedTicketForDetails)}
+                    className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-60"
+                  >
+                    {isDownloadingPdf ? <RefreshCw className="w-4 h-4 animate-spin text-blue-600" /> : <Download className="w-4 h-4 text-blue-600" />}
+                    <span>Download</span>
+                  </button>
+
+                  {selectedTicketForDetails.status !== 'Closed' && isAdminOrManager && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = selectedTicketForDetails;
+                        setSelectedTicketForDetails(null);
+                        setSelectedTicketForResolution(t);
+                        setIsResolveModalOpen(true);
+                      }}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/25 cursor-pointer transition-all"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Resolve &amp; Close Ticket</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>

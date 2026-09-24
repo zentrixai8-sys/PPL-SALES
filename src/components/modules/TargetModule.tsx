@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchTargetsFromSheet, assignTargetToSheet, fetchSalesPersonsFromLoginSheet, fetchCRMOrdersFromSheet, deleteSheetRowById, updateSheetRow } from '../../services/api';
 import { TargetRecord, CRMOrderRecord } from '../../types';
@@ -76,6 +76,78 @@ const formatMonthDisplay = (val: any): string => {
   }
 
   return str;
+};
+
+// Custom in-DOM dropdown replacing native <select> across this page's filters/forms.
+// Native <select> option lists render as an OS/WebView-anchored popup that can
+// appear outside the card's bounds on mobile (Android WebView) — this keeps the
+// list positioned and sized relative to its own trigger instead.
+interface DropdownOption {
+  value: string;
+  label: string;
+}
+
+interface CustomSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: DropdownOption[];
+  triggerClassName: string;
+  placeholder?: string;
+  accent?: 'indigo' | 'sky';
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, triggerClassName, placeholder, accent = 'indigo' }) => {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const selectedOption = options.find(o => o.value === value);
+  const activeClass = accent === 'sky'
+    ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
+    : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400';
+
+  return (
+    <div className="relative" ref={wrapRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className={`${triggerClassName} text-left truncate ${!selectedOption ? 'text-slate-400 dark:text-slate-500' : ''}`}
+      >
+        {selectedOption ? selectedOption.label : (placeholder || '')}
+      </button>
+      <ChevronDown className={`w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full text-left px-3.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${
+                opt.value === value
+                  ? activeClass
+                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export const TargetModule: React.FC = () => {
@@ -422,20 +494,13 @@ export const TargetModule: React.FC = () => {
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 z-10 pointer-events-none" />
-                <select
+                <CustomSelect
                   value={salesPersonName}
-                  onChange={(e) => setSalesPersonName(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
-                  required
-                >
-                  <option value="" disabled>-- Select Sales Person --</option>
-                  {salesPersonsList.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-3.5 pointer-events-none" />
+                  onChange={setSalesPersonName}
+                  options={salesPersonsList.map((name) => ({ value: name, label: name }))}
+                  placeholder="-- Select Sales Person --"
+                  triggerClassName="w-full pl-9 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+                />
               </div>
             </div>
 
@@ -444,18 +509,19 @@ export const TargetModule: React.FC = () => {
               <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
                 Month <span className="text-rose-500 dark:text-rose-400">*</span>
               </label>
-              <select
+              <CustomSelect
                 value={month}
-                onChange={(e) => setMonth(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"
-              >
-                <option value="July 2026">July 2026</option>
-                <option value="August 2026">August 2026</option>
-                <option value="September 2026">September 2026</option>
-                <option value="October 2026">October 2026</option>
-                <option value="November 2026">November 2026</option>
-                <option value="December 2026">December 2026</option>
-              </select>
+                onChange={setMonth}
+                options={[
+                  { value: 'July 2026', label: 'July 2026' },
+                  { value: 'August 2026', label: 'August 2026' },
+                  { value: 'September 2026', label: 'September 2026' },
+                  { value: 'October 2026', label: 'October 2026' },
+                  { value: 'November 2026', label: 'November 2026' },
+                  { value: 'December 2026', label: 'December 2026' },
+                ]}
+                triggerClassName="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+              />
             </div>
 
             {/* Total New Orders */}
@@ -540,15 +606,17 @@ export const TargetModule: React.FC = () => {
               />
             </div>
 
-            <select
+            <CustomSelect
               value={selectedMonthFilter}
-              onChange={(e) => setSelectedMonthFilter(e.target.value)}
-              className="py-1.5 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer"
-            >
-              <option value="All">All Months</option>
-              <option value="July 2026">July 2026</option>
-              <option value="August 2026">August 2026</option>
-            </select>
+              onChange={setSelectedMonthFilter}
+              options={[
+                { value: 'All', label: 'All Months' },
+                { value: 'July 2026', label: 'July 2026' },
+                { value: 'August 2026', label: 'August 2026' },
+              ]}
+              accent="sky"
+              triggerClassName="py-1.5 pl-3 pr-8 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+            />
           </div>
         </div>
 
@@ -726,16 +794,12 @@ export const TargetModule: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Sales Person Name <span className="text-rose-500 dark:text-rose-400">*</span></label>
-                    <select
+                    <CustomSelect
                       value={editingTarget.salesPersonName}
-                      onChange={(e) => setEditingTarget({ ...editingTarget, salesPersonName: e.target.value })}
-                      className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:border-indigo-500 focus:outline-none appearance-none"
-                      required
-                    >
-                      {salesPersonsList.map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => setEditingTarget({ ...editingTarget, salesPersonName: v })}
+                      options={salesPersonsList.map(name => ({ value: name, label: name }))}
+                      triggerClassName="w-full pl-3 pr-8 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white focus:border-indigo-500 focus:outline-none cursor-pointer"
+                    />
                   </div>
                   <div>
                     <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Month <span className="text-rose-500 dark:text-rose-400">*</span></label>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { ReferenceRecord } from '../../types';
 import { submitReferenceToSheet, fetchSalesPersonsFromLoginSheet } from '../../services/api';
@@ -22,9 +22,77 @@ import {
   Loader2,
   CheckCircle2,
   Edit2,
-  Trash2
+  Trash2,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+// Custom in-DOM dropdown replacing native <select> for the sales-person pickers below.
+// Native <select> option lists render as an OS/WebView-anchored popup that can
+// appear outside the card's bounds on mobile (Android WebView) — this keeps the
+// list positioned and sized relative to its own trigger instead.
+interface DropdownOption {
+  value: string;
+  label: string;
+}
+
+interface CustomSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: DropdownOption[];
+  triggerClassName: string;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, triggerClassName }) => {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const selectedLabel = options.find(o => o.value === value)?.label ?? value;
+
+  return (
+    <div className="relative w-full" ref={wrapRef}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className={`${triggerClassName} text-left truncate cursor-pointer`}
+      >
+        {selectedLabel}
+      </button>
+      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-slate-800 bg-slate-900 shadow-xl custom-scrollbar">
+          {options.map(opt => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full text-left px-3.5 py-2.5 text-xs font-medium transition-colors cursor-pointer ${
+                opt.value === value
+                  ? 'bg-sky-500/10 text-sky-400'
+                  : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const ReferencesModule: React.FC = () => {
   const { authState, references, addReference, updateReference, deleteReference, refreshReferences, showToast } = useAuth();
@@ -299,19 +367,16 @@ export const ReferencesModule: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <div className="flex-1 sm:flex-initial flex items-center gap-1.5 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <select
+            <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <CustomSelect
               value={selectedSalesPerson}
-              onChange={e => setSelectedSalesPerson(e.target.value)}
-              className="bg-transparent text-xs text-slate-200 focus:outline-none font-medium cursor-pointer w-full"
-            >
-              <option value="All" className="bg-slate-900 text-white">All Sales Representatives</option>
-              {salesPersonList.map(name => (
-                <option key={name} value={name} className="bg-slate-900 text-white">
-                  {name}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedSalesPerson}
+              options={[
+                { value: 'All', label: 'All Sales Representatives' },
+                ...salesPersonList.map(name => ({ value: name, label: name }))
+              ]}
+              triggerClassName="w-full pr-6 bg-transparent text-xs text-slate-200 focus:outline-none font-medium"
+            />
           </div>
 
           <button
@@ -532,17 +597,12 @@ export const ReferencesModule: React.FC = () => {
                     <label className="block text-slate-300 font-semibold mb-1">
                       Allotted To Sales Person Name *
                     </label>
-                    <select
+                    <CustomSelect
                       value={allottedToSalesPersonName}
-                      onChange={e => setAllottedToSalesPersonName(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
-                    >
-                      {salesPersonList.map(name => (
-                        <option key={name} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setAllottedToSalesPersonName}
+                      options={salesPersonList.map(name => ({ value: name, label: name }))}
+                      triggerClassName="w-full pl-3 pr-6 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-slate-300 font-semibold mb-1">
